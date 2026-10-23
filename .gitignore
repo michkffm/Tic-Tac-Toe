@@ -1,0 +1,16 @@
+# Dependencies and generated output
+node_modules/
+dist/
+.angular/
+coverage/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration and operating-system files
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
