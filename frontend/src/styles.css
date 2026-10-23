@@ -6,3 +6,7 @@ button { font: inherit; }
 a { color: inherit; text-underline-offset: 4px; }
 button:focus-visible, a:focus-visible { outline: 3px solid #156f68; outline-offset: 5px; }
 ::selection { color: #173b36; background: #c3e9db; }
+
+:root { --text: #253b40; --text-muted: #596f6b; --accent: #247a72; --accent-o: #cd654e; --line: #dce4df; --surface: #fff; --surface-muted: #f4f6f2; --board: #eaf0ea; --cell: #f6f8f3; --o-cell: #fff2e9; --win: #d7ece1; --active: #edf6ef; color: var(--text); color-scheme: light; }
+:root[data-theme="dark"] { --text: #edf5f1; --text-muted: #b1c5bc; --accent: #79d0bd; --accent-o: #f4a38a; --line: #3c514a; --surface: #1c2c27; --surface-muted: #24372f; --board: #13231d; --cell: #293e34; --o-cell: #44352e; --win: #375d4b; --active: #304d3e; color-scheme: dark; background: #101c17; }
+:root[data-theme="dark"] button:focus-visible, :root[data-theme="dark"] a:focus-visible { outline-color: #8ae6cf; }

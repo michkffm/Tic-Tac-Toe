@@ -1,57 +1,66 @@
 <div class="page-shell">
   <header class="site-header">
-    <a class="brand" href="./" aria-label="Tic-Tac-Toe – Startseite">
+    <a class="brand" href="./" [attr.aria-label]="t('Tic-Tac-Toe – Startseite', 'Tic-Tac-Toe – home')">
       <span class="brand-mark" aria-hidden="true"><span class="symbol x"></span><span class="symbol o"></span></span>
       <span>spielzeit<span class="brand-dot">.</span></span>
     </a>
-    <span class="header-note">Kleine Pause. Gutes Duell.</span>
-    <a class="source-link" href="https://github.com/michkffm/Tic-Tac-Toe" target="_blank" rel="noopener noreferrer">Auf GitHub <span aria-hidden="true">↗</span></a>
+    <div class="preferences"><button type="button" (click)="toggleTheme()" [attr.aria-pressed]="darkMode">{{ darkMode ? t('Heller Modus', 'Light mode') : t('Dunkler Modus', 'Dark mode') }}</button><button type="button" (click)="toggleLanguage()" [attr.aria-label]="t('Sprache zu Englisch wechseln', 'Switch language to German')">{{ language === 'de' ? 'English' : 'Deutsch' }}</button></div><span class="header-note">{{ t('Kleine Pause. Gutes Duell.', 'A little break. A good duel.') }}</span>
+    <a class="source-link" href="https://github.com/michkffm/Tic-Tac-Toe" target="_blank" rel="noopener noreferrer">{{ t('Auf GitHub', 'On GitHub') }} <span aria-hidden="true">↗</span></a>
   </header>
 
   <main id="inhalt">
     <section class="intro" aria-labelledby="page-title">
-      <p class="eyebrow"><span aria-hidden="true"></span> EIN GERÄT. ZWEI KÖPFE.</p>
-      <h1 id="page-title">Dein Zug.<br>Dein <span>Moment.</span></h1>
-      <p class="intro-copy">Drei in einer Reihe. Ein kleines Duell.<br>Wer von euch denkt einen Zug weiter?</p>
-      <div class="local-badge"><span aria-hidden="true">✦</span> Für zwei Personen · Direkt im Browser</div>
+      <p class="eyebrow"><span aria-hidden="true"></span> {{ t('EIN GERÄT. ZWEI KÖPFE.', 'ONE DEVICE. TWO MINDS.') }}</p>
+      <h1 id="page-title">{{ t('Dein Zug.', 'Your move.') }}<br>{{ t('Dein', 'Your') }} <span>{{ t('Moment.', 'moment.') }}</span></h1>
+      <p class="intro-copy">{{ t('Drei in einer Reihe. Ein kleines Duell.', 'Three in a row. A little duel.') }}<br>{{ t('Wer von euch denkt einen Zug weiter?', 'Who is thinking one move ahead?') }}</p>
+      <div class="local-badge"><span aria-hidden="true">✦</span> {{ t('Für zwei Personen · Direkt im Browser', 'For two people · Right in your browser') }}</div>
       <div class="intro-decoration" aria-hidden="true"><span class="symbol x"></span><span class="symbol o"></span><span class="symbol x"></span></div>
     </section>
 
-    <section class="game" aria-label="Tic-Tac-Toe für zwei Personen">
-      <div class="game-topline"><span class="game-tag">TIC-TAC-TOE</span><span class="round-label">RUNDE {{ round.toString().padStart(2, '0') }}</span></div>
+    <section class="game" [attr.aria-label]="t('Tic-Tac-Toe für zwei Personen', 'Tic-Tac-Toe for two players')">
+      <div class="game-topline"><span class="game-tag">TIC-TAC-TOE</span><span class="round-label">{{ t('RUNDE', 'ROUND') }} {{ round.toString().padStart(2, '0') }}</span></div>
       <div class="game-layout">
         <div class="board-column">
           <div class="turn-status" [class.finished]="result !== null" role="status" aria-live="polite" aria-atomic="true">
             <span class="status-dot" aria-hidden="true"></span>{{ status }}
           </div>
-          <div class="board" role="group" aria-label="Spielfeld mit drei Zeilen und drei Spalten" [class.board-complete]="result !== null">
+          <div class="board" role="group" [attr.aria-label]="t('Spielfeld mit drei Zeilen und drei Spalten', 'Board with three rows and three columns')" [class.board-complete]="result !== null">
             @for (value of board; track $index) {
-              <button #cell type="button" class="cell" [class.cell-x]="value === 'X'" [class.cell-o]="value === 'O'" [class.winning]="winningLine.includes($index)" [disabled]="value !== null || result !== null" [attr.aria-label]="cellLabel($index)" (click)="play($index)">
+              <button #cell type="button" class="cell" [class.cell-x]="value === 'X'" [class.cell-o]="value === 'O'" [class.winning]="winningLine.includes($index)" [disabled]="value !== null || result !== null || busy" [attr.aria-label]="cellLabel($index)" (click)="play($index)">
                 @if (value) { <span class="symbol" [class.x]="value === 'X'" [class.o]="value === 'O'" aria-hidden="true"></span> }
                 @else { <span class="cell-hint" aria-hidden="true">+</span> }
               </button>
             }
           </div>
-          <div class="board-bottom"><span>{{ moveCount }} / 9 Felder belegt</span><span><span class="small-dot" aria-hidden="true"></span> Lokal gespielt</span></div>
+          <div class="board-bottom"><span>{{ moveCount }} / 9 {{ t('Felder belegt', 'cells occupied') }}</span><span><span class="small-dot" aria-hidden="true"></span> {{ t('Lokal gespielt', 'Played locally') }}</span></div>
         </div>
 
-        <aside class="match-panel" aria-label="Spielstand und Spielsteuerung">
-          <div class="score-heading"><h2>Euer Spielstand</h2><span aria-hidden="true">↗</span></div>
+        <aside class="match-panel" [attr.aria-label]="t('Spielstand und Spielsteuerung', 'Scores and game controls')">
+          <div class="score-heading"><h2>{{ t('Euer Spielstand', 'Your score') }}</h2><span aria-hidden="true">↗</span></div>
           <div class="player-card" [class.active]="result === null && currentPlayer === 'X'">
-            <span class="player-icon"><span class="symbol x" aria-hidden="true"></span></span><div><span class="player-name">Spieler X</span><span class="player-caption">{{ result === 'X' ? 'Runde gewonnen' : result === null && currentPlayer === 'X' ? 'Du bist dran' : 'Bereit für deinen Zug' }}</span></div><strong class="score" aria-label="Siege Spieler X">{{ scores.X }}</strong>
+            <span class="player-icon"><span class="symbol x" aria-hidden="true"></span></span><div><span class="player-name">{{ t('Spieler X', 'Player X') }}</span><span class="player-caption">{{ result === 'X' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'X' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler X', 'Player X wins')">{{ scores.X }}</strong>
           </div>
           <div class="player-card" [class.active]="result === null && currentPlayer === 'O'">
-            <span class="player-icon"><span class="symbol o" aria-hidden="true"></span></span><div><span class="player-name">Spieler O</span><span class="player-caption">{{ result === 'O' ? 'Runde gewonnen' : result === null && currentPlayer === 'O' ? 'Du bist dran' : 'Bereit für deinen Zug' }}</span></div><strong class="score" aria-label="Siege Spieler O">{{ scores.O }}</strong>
+            <span class="player-icon"><span class="symbol o" aria-hidden="true"></span></span><div><span class="player-name">{{ t('Spieler O', 'Player O') }}</span><span class="player-caption">{{ result === 'O' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'O' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler O', 'Player O wins')">{{ scores.O }}</strong>
           </div>
-          <div class="draw-score"><span>Unentschieden</span><strong>{{ scores.draw }}</strong></div>
-          <div class="game-actions"><button #nextRound class="primary-button" type="button" (click)="newRound()">{{ result === null ? 'Neue Runde' : 'Nächste Runde' }} <span aria-hidden="true">→</span></button><button class="reset-button" type="button" (click)="resetMatch()"><span aria-hidden="true">↺</span> Spielstand zurücksetzen</button></div>
-          <p class="score-note">Der Spielstand gilt für diese Sitzung.<br>Beim Neuladen beginnt ihr von vorn.</p>
+          <div class="draw-score"><span>{{ t('Unentschieden', 'Draw') }}</span><strong>{{ scores.draw }}</strong></div>
+          <div class="game-actions"><button #nextRound class="primary-button" type="button" [disabled]="busy" (click)="newRound()">{{ result === null ? t('Neue Runde', 'New round') : t('Nächste Runde', 'Next round') }} <span aria-hidden="true">→</span></button><button class="reset-button" type="button" [disabled]="busy" (click)="resetMatch()"><span aria-hidden="true">↺</span> {{ t('Spielstand zurücksetzen', 'Reset scores') }}</button></div>
+          <p class="score-note">{{ t('Speichern und Laden erfolgt nur auf Knopfdruck. Ohne Server bleibt das Spiel in dieser Sitzung.', 'Save and load manually. Without a server, your game lasts for this session.') }}</p>
+          <div class="storage-panel">
+            @if (serverStorage) {
+              <div class="storage-actions"><button type="button" [disabled]="busy" (click)="transferState('save')">{{ t('Speichern', 'Save') }}</button><button type="button" [disabled]="busy" (click)="transferState('load')">{{ t('Laden', 'Load') }}</button></div>
+              <p class="score-note">{{ t('Privater Spielstand für diesen Browser. Beim Löschen der Browserdaten geht der Zugang verloren.', 'Private save for this browser. Clearing browser data removes access.') }}</p>
+            } @else {
+              <p class="score-note">{{ t('Serverspeicherung ist in dieser Version nicht eingerichtet.', 'Server storage is not configured for this version.') }}</p>
+            }
+            <p class="storage-status" role="status" aria-live="polite">{{ busy ? t('Bitte warten …', 'Please wait …') : storageStatus }}</p>
+          </div>
         </aside>
       </div>
     </section>
 
-    <section class="how-to" aria-labelledby="rules-title"><div class="rules-heading"><span class="eyebrow">SCHNELL ERKLÄRT</span><h2 id="rules-title">Einfach spielen.</h2></div><div class="rule"><span class="rule-number">01</span><p><strong>Abwechselnd setzen.</strong><br>X beginnt die erste Runde, danach wechselt ihr euch ab.</p></div><div class="rule"><span class="rule-number">02</span><p><strong>Drei machen den Unterschied.</strong><br>Waagerecht, senkrecht oder diagonal: Eine Reihe gewinnt.</p></div><div class="rule"><span class="rule-number">03</span><p><strong>Neue Runde, neue Chance.</strong><br>Wer die nächste Runde beginnt, wechselt automatisch.</p></div></section>
+    <section class="how-to" aria-labelledby="rules-title"><div class="rules-heading"><span class="eyebrow">{{ t('SCHNELL ERKLÄRT', 'THE QUICK GUIDE') }}</span><h2 id="rules-title">{{ t('Einfach spielen.', 'Just play.') }}</h2></div><div class="rule"><span class="rule-number">01</span><p><strong>{{ t('Abwechselnd setzen.', 'Take turns.') }}</strong><br>{{ t('X beginnt die erste Runde, danach wechselt ihr euch ab.', 'X starts the first round, then you take turns.') }}</p></div><div class="rule"><span class="rule-number">02</span><p><strong>{{ t('Drei machen den Unterschied.', 'Three make the difference.') }}</strong><br>{{ t('Waagerecht, senkrecht oder diagonal: Eine Reihe gewinnt.', 'Horizontal, vertical or diagonal: a line wins.') }}</p></div><div class="rule"><span class="rule-number">03</span><p><strong>{{ t('Neue Runde, neue Chance.', 'New round, new chance.') }}</strong><br>{{ t('Wer die nächste Runde beginnt, wechselt automatisch.', 'The starting player changes automatically each round.') }}</p></div></section>
   </main>
 
-  <footer><p>Ein Klassiker. Ein guter Zeitvertreib.</p><p>Entwickelt von <a href="https://github.com/michkffm" target="_blank" rel="noopener noreferrer">Michael Koch ↗</a></p><span>Kein Login. Keine Uploads.</span></footer>
+  <footer><p>{{ t('Ein Klassiker. Ein guter Zeitvertreib.', 'A classic. Time well spent.') }}</p><p>{{ t('Entwickelt von', 'Created by') }} <a href="https://github.com/michkffm" target="_blank" rel="noopener noreferrer">Michael Koch ↗</a></p><span>{{ t('Ohne Konto. Auf deinem Gerät gespielt.', 'No account. Played on your device.') }}</span></footer>
 </div>

@@ -10,8 +10,85 @@ const LINES = [
 describe('Tic-Tac-Toe', () => {
   let app: App;
   beforeEach(async () => {
+    localStorage.removeItem('spielzeit-language');
+    localStorage.removeItem('spielzeit-theme');
+    document.documentElement.dataset['theme'] = 'light';
+    spyOn(window, 'matchMedia').and.returnValue({ matches: false } as MediaQueryList);
+    spyOn(window, 'fetch').and.resolveTo(new Response(JSON.stringify({ serverStorage: false }), { status: 200 }));
     await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
     app = TestBed.createComponent(App).componentInstance;
+  });
+
+  it('switches all visible game text and accessible labels to English', () => {
+    app.toggleLanguage();
+    expect(document.documentElement.lang).toBe('en');
+    expect(app.status).toBe('X to move');
+    expect(app.cellLabel(0)).toBe('Row 1, column 1: empty');
+    const fixture = TestBed.createComponent(App);
+    fixture.componentInstance.language = 'en';
+    fixture.detectChanges();
+    const text: string = fixture.nativeElement.textContent;
+    expect(text).toContain('Your move.');
+    expect(text).toContain('New round');
+    expect(text).not.toContain('Dein Zug');
+  });
+
+  it('persists theme and language preferences', () => {
+    app.toggleTheme();
+    app.toggleLanguage();
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    const restored = TestBed.createComponent(App).componentInstance;
+    expect(restored.darkMode).toBeTrue();
+    expect(restored.language).toBe('en');
+  });
+
+  it('saves a snapshot with a private bearer key and reloads it', async () => {
+    app.serverStorage = true;
+    app.play(4);
+    const saved = { board: [...app.board], startingPlayer: 'X', round: 1, scores: { X: 0, O: 0, draw: 0 } };
+    const fetchSpy = window.fetch as jasmine.Spy;
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({ revision: 1 }), { status: 200 }));
+    await app.transferState('save');
+    expect(app.storageMessage).toBe('saved');
+    const options: RequestInit = fetchSpy.calls.mostRecent().args[1];
+    expect(JSON.parse(String(options.body)).state).toEqual(saved);
+    expect(localStorage.getItem('spielzeit-save-key')).toMatch(/^[0-9a-f]{64}$/);
+    app.resetMatch();
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({ state: saved, revision: 1 }), { status: 200 }));
+    await app.transferState('load');
+    expect(app.board[4]).toBe('X');
+    expect(app.currentPlayer).toBe('O');
+    expect(app.storageMessage).toBe('loaded');
+  });
+
+  it('keeps the current game on server conflict, missing save, invalid response or network error', async () => {
+    app.serverStorage = true;
+    app.play(0);
+    const fetchSpy = window.fetch as jasmine.Spy;
+    for (const code of [409, 404, 503]) {
+      fetchSpy.and.resolveTo(new Response('{}', { status: code }));
+      await app.transferState('load');
+      expect(app.board[0]).toBe('X');
+      expect(app.busy).toBeFalse();
+      expect(app.storageMessage).toBe(code === 409 ? 'conflict' : code === 404 ? 'missing' : 'error');
+    }
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({ revision: 1, state: {} }), { status: 200 }));
+    await app.transferState('load');
+    expect(app.storageMessage).toBe('error');
+    expect(app.board[0]).toBe('X');
+    fetchSpy.and.rejectWith(new TypeError('Network unavailable'));
+    await app.transferState('save');
+    expect(app.storageMessage).toBe('error');
+    expect(app.board[0]).toBe('X');
+  });
+
+  it('blocks game changes while transferring a save', () => {
+    app.busy = true;
+    app.play(0);
+    app.newRound();
+    app.resetMatch();
+    expect(app.moveCount).toBe(0);
+    expect(app.round).toBe(1);
   });
 
   it('starts with nine empty fields and X', () => {
