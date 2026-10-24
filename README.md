@@ -115,3 +115,7 @@ Das Spiel verarbeitet keine Konten oder hochgeladenen Dateien. Server-Spielstän
 Der aktualisierte Produktionspaketstand meldete beim Abgleich am 23. Oktober 2026 **keine bekannten Schwachstellen**. In der separaten Karma-Testwerkzeugkette bestehen noch sechs abhängige Audit-Hinweise zu einem `braces`-Problem; npm bietet dafür im bestehenden Setup keinen passenden stabilen Fix an. Diese Werkzeuge werden nicht in die statische Website eingebunden. Die bestehenden Flask-/Werkzeug-Anforderungen wurden innerhalb ihrer stabilen Versionsreihe aktualisiert; der Abgleich der sieben Backend-Pakete am 23. Oktober 2026 meldete keine bekannten Schwachstellen. Datenbankzugriffe sind parametrisiert, Eingaben werden validiert und fremde Browser-Origin-Zugriffe erhalten keine CORS-Freigabe.
 
 `node_modules` und Build-Ergebnisse gehören nicht ins Repository. Abhängigkeiten werden aus `package-lock.json` mit `npm ci` reproduziert.
+
+### Spielmodi
+
+Die Auswahlkarten wechseln zwischen einem lokalen Duell zu zweit und einem Einzelspiel gegen den Computer. Im Einzelspiel übernimmt der Mensch X und der Computer O. Der Computer sucht mit Minimax den besten Zug und kann nicht besiegt werden. Der Rundenbeginn wechselt weiterhin; ein Moduswechsel setzt das Match zurück. Serverspielstände enthalten den Spielmodus; ältere Spielstände werden als Zweispielermodus geladen.

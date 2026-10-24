@@ -98,3 +98,15 @@ button:disabled { cursor: wait; }
 .storage-status { color: var(--text); font-size: 11px; line-height: 1.6; min-height: 1em; }
 @media (max-width: 1200px) { .header-note { display: none; } }
 @media (max-width: 580px) { .site-header { height: auto; min-height: 100px; padding: 16px 0; flex-wrap: wrap; gap: 10px; } .preferences { order: 3; width: 100%; } .preferences button { flex: 1; } .storage-panel { grid-column: 1 / -1; } .local-badge { white-space: normal; } }
+
+.mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
+.mode-card { display: flex; align-items: center; gap: 10px; text-align: left; padding: 16px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-muted); color: var(--text); cursor: pointer; transition: border-color .18s, background .18s; }
+.mode-card:hover { border-color: var(--accent); }
+.mode-card.selected { border-color: var(--accent); background: var(--active); }
+.mode-icon { color: var(--accent); font-size: 19px; font-weight: 800; }
+.mode-card strong, .mode-card small { display: block; }
+.mode-card strong { font-size: 12px; }
+.mode-card small { margin-top: 5px; color: var(--text-muted); font-size: 10px; line-height: 1.5; }
+.mode-check { margin-left: auto; color: var(--accent); }
+.mode-note { color: var(--text-muted); font-size: 10px; line-height: 1.6; margin: 10px 0 0; }
+@media (max-width: 580px) { .mode-picker { grid-template-columns: 1fr; gap: 8px; } .mode-card { padding: 14px; } .mode-card strong { font-size: 14px; } .mode-card small, .mode-note { font-size: 11px; } }

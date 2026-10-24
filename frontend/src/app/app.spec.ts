@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { App } from './app';
+import { App, bestComputerMove } from './app';
 
 const LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -45,7 +45,7 @@ describe('Tic-Tac-Toe', () => {
   it('saves a snapshot with a private bearer key and reloads it', async () => {
     app.serverStorage = true;
     app.play(4);
-    const saved = { board: [...app.board], startingPlayer: 'X', round: 1, scores: { X: 0, O: 0, draw: 0 } };
+    const saved = { mode: 'local', board: [...app.board], startingPlayer: 'X', round: 1, scores: { X: 0, O: 0, draw: 0 } };
     const fetchSpy = window.fetch as jasmine.Spy;
     fetchSpy.and.resolveTo(new Response(JSON.stringify({ revision: 1 }), { status: 200 }));
     await app.transferState('save');
@@ -89,6 +89,44 @@ describe('Tic-Tac-Toe', () => {
     app.resetMatch();
     expect(app.moveCount).toBe(0);
     expect(app.round).toBe(1);
+  });
+
+  it('plays solo, opens the next round as O and resets when switching modes', () => {
+    app.setMode('single');
+    app.play(0);
+    expect(app.moveCount).toBe(2);
+    expect(app.currentPlayer).toBe('X');
+    app.newRound();
+    expect(app.moveCount).toBe(1);
+    expect(app.board.includes('O')).toBeTrue();
+    app.setMode('local');
+    expect(app.moveCount).toBe(0);
+    expect(app.round).toBe(1);
+  });
+
+  it('renders mode selection and plays a computer reply through the UI', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    const solo = root.querySelector<HTMLButtonElement>('.mode-card')!;
+    solo.click();
+    fixture.detectChanges();
+    expect(solo.getAttribute('aria-pressed')).toBe('true');
+    root.querySelector<HTMLButtonElement>('.cell')!.click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.cell-x').length).toBe(1);
+    expect(root.querySelectorAll('.cell-o').length).toBe(1);
+    expect(root.textContent).toContain('Computer · O');
+  });
+
+  it('loads solo games and completes a pending computer turn', async () => {
+    app.serverStorage = true;
+    const state = { mode: 'single', board: ['X', null, null, null, null, null, null, null, null], startingPlayer: 'X', round: 1, scores: { X: 0, O: 0, draw: 0 } };
+    (window.fetch as jasmine.Spy).and.resolveTo(new Response(JSON.stringify({ state, revision: 1 }), { status: 200 }));
+    await app.transferState('load');
+    expect(app.mode).toBe('single');
+    expect(app.moveCount).toBe(2);
+    expect(app.currentPlayer).toBe('X');
   });
 
   it('starts with nine empty fields and X', () => {
@@ -185,5 +223,28 @@ describe('Tic-Tac-Toe', () => {
     expect(cells.every((cell) => cell.disabled)).toBeTrue();
     expect(root.querySelectorAll('.winning').length).toBe(3);
     expect(cells[0].getAttribute('aria-label')).toContain('X');
+  });
+});
+
+describe('Computer opponent', () => {
+  it('takes a win and blocks an immediate loss', () => {
+    expect(bestComputerMove(['O', 'O', null, 'X', 'X', null, 'X', null, null])).toBe(2);
+    expect(bestComputerMove(['X', 'X', null, null, 'O', null, null, null, null])).toBe(2);
+  });
+  it('never loses against any human continuation with either starter', () => {
+    const winner = (board: (string | null)[]) => LINES.some(line => line.every(i => board[i] === 'X'));
+    function visit(board: ('X' | 'O' | null)[], humanTurn: boolean): void {
+      expect(winner(board)).toBeFalse();
+      if (LINES.some(line => board[line[0]] && line.every(i => board[i] === board[line[0]])) || board.every(Boolean)) return;
+      if (!humanTurn) {
+        const index = bestComputerMove(board);
+        expect(index).not.toBeNull();
+        if (index !== null) { const next = [...board]; next[index] = 'O'; visit(next, true); }
+      } else {
+        board.forEach((cell, i) => { if (!cell) { const next = [...board]; next[i] = 'X'; visit(next, false); } });
+      }
+    }
+    visit(Array(9).fill(null), true);
+    visit(Array(9).fill(null), false);
   });
 });

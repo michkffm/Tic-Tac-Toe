@@ -16,7 +16,9 @@ LINES = ((0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6))
 
 
 def validate_state(data):
-    if not isinstance(data, dict) or set(data) != {"board", "startingPlayer", "round", "scores"}:
+    if not isinstance(data, dict) or set(data) not in ({"board", "startingPlayer", "round", "scores"}, {"board", "startingPlayer", "round", "scores", "mode"}):
+        return False
+    if data.get("mode", "local") not in ("single", "local"):
         return False
     board, starter, round_number, scores = (data[k] for k in ("board", "startingPlayer", "round", "scores"))
     if not isinstance(board, list) or len(board) != 9 or any(c not in (None, "X", "O") for c in board):

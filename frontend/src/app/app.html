@@ -10,15 +10,24 @@
 
   <main id="inhalt">
     <section class="intro" aria-labelledby="page-title">
-      <p class="eyebrow"><span aria-hidden="true"></span> {{ t('EIN GERÄT. ZWEI KÖPFE.', 'ONE DEVICE. TWO MINDS.') }}</p>
-      <h1 id="page-title">{{ t('Dein Zug.', 'Your move.') }}<br>{{ t('Dein', 'Your') }} <span>{{ t('Moment.', 'moment.') }}</span></h1>
-      <p class="intro-copy">{{ t('Drei in einer Reihe. Ein kleines Duell.', 'Three in a row. A little duel.') }}<br>{{ t('Wer von euch denkt einen Zug weiter?', 'Who is thinking one move ahead?') }}</p>
-      <div class="local-badge"><span aria-hidden="true">✦</span> {{ t('Für zwei Personen · Direkt im Browser', 'For two people · Right in your browser') }}</div>
+      <p class="eyebrow"><span aria-hidden="true"></span> {{ t('DEINE PAUSE. DEIN SPIEL.', 'YOUR BREAK. YOUR GAME.') }}</p>
+      <h1 id="page-title">{{ t('Dein Zug.', 'Your move.') }}<br>{{ t(' Dein', ' Your') }} <span>{{ t('Moment.', 'moment.') }}</span></h1>
+      <p class="intro-copy">{{ t('Drei in einer Reihe. Ein kleines Duell.', 'Three in a row. A little duel.') }}<br>{{ t(' Alleine oder zu zweit: Wer denkt weiter?', ' Solo or together: who thinks ahead?') }}</p>
+      <div class="local-badge"><span aria-hidden="true">✦</span> {{ t('Alleine oder zu zweit · Direkt im Browser', 'Solo or together · Right in your browser') }}</div>
       <div class="intro-decoration" aria-hidden="true"><span class="symbol x"></span><span class="symbol o"></span><span class="symbol x"></span></div>
     </section>
 
-    <section class="game" [attr.aria-label]="t('Tic-Tac-Toe für zwei Personen', 'Tic-Tac-Toe for two players')">
+    <section class="game" [attr.aria-label]="t('Tic-Tac-Toe', 'Tic-Tac-Toe')">
       <div class="game-topline"><span class="game-tag">TIC-TAC-TOE</span><span class="round-label">{{ t('RUNDE', 'ROUND') }} {{ round.toString().padStart(2, '0') }}</span></div>
+      <div class="mode-picker" role="group" [attr.aria-label]="t('Spielmodus wählen', 'Choose game mode')">
+        <button type="button" class="mode-card" [class.selected]="mode === 'single'" [attr.aria-pressed]="mode === 'single'" [disabled]="busy" (click)="setMode('single')">
+          <span class="mode-icon" aria-hidden="true">✦</span><span><strong>{{ t('Alleine spielen', 'Play solo') }}</strong><small>{{ t('Du gegen den Computer', 'You against the computer') }}</small></span><span class="mode-check" aria-hidden="true">{{ mode === 'single' ? '✓' : '→' }}</span>
+        </button>
+        <button type="button" class="mode-card" [class.selected]="mode === 'local'" [attr.aria-pressed]="mode === 'local'" [disabled]="busy" (click)="setMode('local')">
+          <span class="mode-icon" aria-hidden="true">XO</span><span><strong>{{ t('Zu zweit spielen', 'Play together') }}</strong><small>{{ t('Ein Gerät. Euer Duell.', 'One device. Your duel.') }}</small></span><span class="mode-check" aria-hidden="true">{{ mode === 'local' ? '✓' : '→' }}</span>
+        </button>
+      </div>
+      <p class="mode-note">{{ t('Modus wechseln startet ein neues Match mit 0 Punkten.', 'Switching modes starts a new match with 0 points.') }}</p>
       <div class="game-layout">
         <div class="board-column">
           <div class="turn-status" [class.finished]="result !== null" role="status" aria-live="polite" aria-atomic="true">
@@ -38,10 +47,10 @@
         <aside class="match-panel" [attr.aria-label]="t('Spielstand und Spielsteuerung', 'Scores and game controls')">
           <div class="score-heading"><h2>{{ t('Euer Spielstand', 'Your score') }}</h2><span aria-hidden="true">↗</span></div>
           <div class="player-card" [class.active]="result === null && currentPlayer === 'X'">
-            <span class="player-icon"><span class="symbol x" aria-hidden="true"></span></span><div><span class="player-name">{{ t('Spieler X', 'Player X') }}</span><span class="player-caption">{{ result === 'X' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'X' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler X', 'Player X wins')">{{ scores.X }}</strong>
+            <span class="player-icon"><span class="symbol x" aria-hidden="true"></span></span><div><span class="player-name">{{ mode === 'single' ? t('Du · X', 'You · X') : t('Spieler X', 'Player X') }}</span><span class="player-caption">{{ result === 'X' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'X' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler X', 'Player X wins')">{{ scores.X }}</strong>
           </div>
           <div class="player-card" [class.active]="result === null && currentPlayer === 'O'">
-            <span class="player-icon"><span class="symbol o" aria-hidden="true"></span></span><div><span class="player-name">{{ t('Spieler O', 'Player O') }}</span><span class="player-caption">{{ result === 'O' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'O' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler O', 'Player O wins')">{{ scores.O }}</strong>
+            <span class="player-icon"><span class="symbol o" aria-hidden="true"></span></span><div><span class="player-name">{{ mode === 'single' ? t('Computer · O', 'Computer · O') : t('Spieler O', 'Player O') }}</span><span class="player-caption">{{ result === 'O' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'O' ? (mode === 'single' ? t('Am Zug', 'To move') : t('Du bist dran', 'Your turn')) : (mode === 'single' ? t('Dein Gegenspieler', 'Your opponent') : t('Bereit für deinen Zug', 'Ready for your move')) }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler O', 'Player O wins')">{{ scores.O }}</strong>
           </div>
           <div class="draw-score"><span>{{ t('Unentschieden', 'Draw') }}</span><strong>{{ scores.draw }}</strong></div>
           <div class="game-actions"><button #nextRound class="primary-button" type="button" [disabled]="busy" (click)="newRound()">{{ result === null ? t('Neue Runde', 'New round') : t('Nächste Runde', 'Next round') }} <span aria-hidden="true">→</span></button><button class="reset-button" type="button" [disabled]="busy" (click)="resetMatch()"><span aria-hidden="true">↺</span> {{ t('Spielstand zurücksetzen', 'Reset scores') }}</button></div>

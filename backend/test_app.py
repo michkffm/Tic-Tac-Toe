@@ -39,6 +39,13 @@ class StorageTests(unittest.TestCase):
             owner = db.execute('SELECT owner FROM saves').fetchone()[0]
         self.assertNotEqual(owner, self.token)
 
+    def test_game_mode_roundtrip_and_validation(self):
+        state = {**empty_state(), 'mode': 'single'}
+        self.assertEqual(self.save(state).status_code, 200)
+        self.assertEqual(self.client.get('/api/state', headers=self.headers).json['state'], state)
+        for mode in ('invalid', None, {}, []):
+            self.assertEqual(self.save({**state, 'mode': mode}, 1).status_code, 400)
+
     def test_authentication_and_isolation(self):
         self.assertEqual(self.client.get('/api/state').status_code, 401)
         self.save()
