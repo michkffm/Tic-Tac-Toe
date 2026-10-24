@@ -46,6 +46,14 @@ class StorageTests(unittest.TestCase):
         for mode in ('invalid', None, {}, []):
             self.assertEqual(self.save({**state, 'mode': mode}, 1).status_code, 400)
 
+    def test_settings_roundtrip_and_invalid_values(self):
+        settings = {"names": {"X": "Alex", "O": "Sam"}, "difficulty": "medium", "targetWins": 3, "lastMove": None}
+        state = {**empty_state(), "settings": settings}
+        self.assertEqual(self.save(state).status_code, 200)
+        self.assertEqual(self.client.get('/api/state', headers=self.headers).json['state'], state)
+        for key, value in (("names", {"X": "a" * 25, "O": ""}), ("difficulty", "wrong"), ("targetWins", True), ("lastMove", 9)):
+            self.assertEqual(self.save({**state, "settings": {**settings, key: value}}, 1).status_code, 400)
+
     def test_authentication_and_isolation(self):
         self.assertEqual(self.client.get('/api/state').status_code, 401)
         self.save()

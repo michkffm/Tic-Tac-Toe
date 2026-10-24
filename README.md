@@ -118,4 +118,6 @@ Der aktualisierte Produktionspaketstand meldete beim Abgleich am 23. Oktober 202
 
 ### Spielmodi
 
-Die Auswahlkarten wechseln zwischen einem lokalen Duell zu zweit und einem Einzelspiel gegen den Computer. Im Einzelspiel übernimmt der Mensch X und der Computer O. Der Computer sucht mit Minimax den besten Zug und kann nicht besiegt werden. Der Rundenbeginn wechselt weiterhin; ein Moduswechsel setzt das Match zurück. Serverspielstände enthalten den Spielmodus; ältere Spielstände werden als Zweispielermodus geladen.
+Die Auswahlkarten wechseln zwischen einem lokalen Duell zu zweit und einem Einzelspiel gegen den Computer. Im Einzelspiel übernimmt der Mensch X und der Computer O. Auf Schwer sucht der Computer mit Minimax den besten Zug und kann nicht besiegt werden. Leicht wählt zufällige freie Felder; Mittel nutzt unmittelbare Gewinnchancen und blockiert direkte Gefahren. Der Rundenbeginn wechselt weiterhin; ein Moduswechsel setzt das Match zurück. Serverspielstände enthalten den Spielmodus; ältere Spielstände werden als Zweispielermodus geladen.
+
+Im Zweispielermodus sind optionale Namen (maximal 24 Zeichen) möglich. Freies Spiel oder ein Match bis drei Siege sind wählbar. Ein Punkt markiert den letzten Zug; beim Matchgewinn erscheint eine kurze Animation (mit Rücksicht auf reduzierte Bewegung). Geänderte Schwierigkeit oder Matchart starten ein neues Match, Namen bleiben dabei erhalten. Die Einstellungen werden bei manueller Serverspeicherung mitgesichert; alte Spielstände bleiben kompatibel.

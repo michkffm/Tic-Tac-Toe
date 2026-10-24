@@ -16,10 +16,22 @@ LINES = ((0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6))
 
 
 def validate_state(data):
-    if not isinstance(data, dict) or set(data) not in ({"board", "startingPlayer", "round", "scores"}, {"board", "startingPlayer", "round", "scores", "mode"}):
+    if not isinstance(data, dict) or not {"board", "startingPlayer", "round", "scores"} <= set(data) or set(data) - {"board", "startingPlayer", "round", "scores", "mode", "settings"}:
         return False
     if data.get("mode", "local") not in ("single", "local"):
         return False
+    if "settings" in data:
+        settings = data["settings"]
+        if not isinstance(settings, dict) or set(settings) != {"names", "difficulty", "targetWins", "lastMove"}:
+            return False
+        names = settings["names"]
+        if not isinstance(names, dict) or set(names) != {"X", "O"} or any(not isinstance(name, str) or len(name) > 24 for name in names.values()):
+            return False
+        if settings["difficulty"] not in ("easy", "medium", "hard") or type(settings["targetWins"]) is not int or settings["targetWins"] not in (0, 3):
+            return False
+        last = settings["lastMove"]
+        if last is not None and (type(last) is not int or not 0 <= last < 9):
+            return False
     board, starter, round_number, scores = (data[k] for k in ("board", "startingPlayer", "round", "scores"))
     if not isinstance(board, list) or len(board) != 9 or any(c not in (None, "X", "O") for c in board):
         return False

@@ -1,0 +1,11 @@
+.match-settings { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-top: 20px; }
+.name-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
+.match-settings label { display: grid; gap: 7px; min-width: 0; font-size: 11px; font-weight: 650; color: var(--text-muted); }
+.match-settings input, .match-settings select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: 9px; padding: 10px; background: var(--surface-muted); color: var(--text); font: inherit; }
+.player-name { overflow-wrap: anywhere; }
+.cell.last-move::after { content: ''; position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--text); }
+.match-celebration { display: grid; justify-items: center; gap: 8px; padding: 22px; margin-top: 20px; text-align: center; border-radius: 14px; background: var(--active); color: var(--accent); animation: celebrate .6s ease-out; overflow-wrap: anywhere; }
+.match-celebration > span:first-child { font-size: 32px; }
+.match-celebration > span:last-child { color: var(--text-muted); font-size: 12px; }
+@keyframes celebrate { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 680px) { .match-settings { grid-template-columns: 1fr; } }

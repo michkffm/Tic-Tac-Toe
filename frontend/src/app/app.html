@@ -28,6 +28,21 @@
         </button>
       </div>
       <p class="mode-note">{{ t('Modus wechseln startet ein neues Match mit 0 Punkten.', 'Switching modes starts a new match with 0 points.') }}</p>
+      <div class="match-settings">
+        @if (mode === 'local') {
+          <div class="name-fields">
+            <label for="name-x">{{ t('Name für X', 'Name for X') }}<input #nameX id="name-x" type="text" maxlength="24" autocomplete="off" [placeholder]="t('Spieler X', 'Player X')" [value]="names.X" [disabled]="busy" (input)="updateName('X', nameX.value)"></label>
+            <label for="name-o">{{ t('Name für O', 'Name for O') }}<input #nameO id="name-o" type="text" maxlength="24" autocomplete="off" [placeholder]="t('Spieler O', 'Player O')" [value]="names.O" [disabled]="busy" (input)="updateName('O', nameO.value)"></label>
+          </div>
+        } @else {
+          <label for="difficulty">{{ t('Dein Gegner', 'Your opponent') }}<select #level id="difficulty" [value]="difficulty" [disabled]="busy" (change)="setDifficulty(level.value)"><option value="easy">{{ t('Leicht · Locker spielen', 'Easy · Play casually') }}</option><option value="medium">{{ t('Mittel · Denke voraus', 'Medium · Think ahead') }}</option><option value="hard">{{ t('Schwer · Perfektes Spiel', 'Hard · Perfect play') }}</option></select></label>
+        }
+        <label for="target">{{ t('Match', 'Match') }}<select #target id="target" [value]="targetWins" [disabled]="busy" (change)="setTarget(target.value)"><option value="0">{{ t('Freies Spiel', 'Free play') }}</option><option value="3">{{ t('Wer zuerst 3 Siege hat', 'First to 3 wins') }}</option></select></label>
+      </div>
+      <p class="mode-note">{{ t('Schwierigkeit oder Match wechseln setzt die Punkte zurück. Namen bleiben erhalten.', 'Changing difficulty or match resets scores. Names are kept.') }}</p>
+      @if (matchWinner; as winner) {
+        <div class="match-celebration" role="status"><span aria-hidden="true">✦</span><strong>{{ playerName(winner) }} {{ t('gewinnt das Match!', 'wins the match!') }}</strong><span>{{ t('Drei Siege. Stark gespielt.', 'Three wins. Well played.') }}</span></div>
+      }
       <div class="game-layout">
         <div class="board-column">
           <div class="turn-status" [class.finished]="result !== null" role="status" aria-live="polite" aria-atomic="true">
@@ -35,7 +50,7 @@
           </div>
           <div class="board" role="group" [attr.aria-label]="t('Spielfeld mit drei Zeilen und drei Spalten', 'Board with three rows and three columns')" [class.board-complete]="result !== null">
             @for (value of board; track $index) {
-              <button #cell type="button" class="cell" [class.cell-x]="value === 'X'" [class.cell-o]="value === 'O'" [class.winning]="winningLine.includes($index)" [disabled]="value !== null || result !== null || busy" [attr.aria-label]="cellLabel($index)" (click)="play($index)">
+              <button #cell type="button" class="cell" [class.last-move]="lastMove === $index" [class.cell-x]="value === 'X'" [class.cell-o]="value === 'O'" [class.winning]="winningLine.includes($index)" [disabled]="value !== null || result !== null || busy" [attr.aria-label]="cellLabel($index)" (click)="play($index)">
                 @if (value) { <span class="symbol" [class.x]="value === 'X'" [class.o]="value === 'O'" aria-hidden="true"></span> }
                 @else { <span class="cell-hint" aria-hidden="true">+</span> }
               </button>
@@ -47,13 +62,13 @@
         <aside class="match-panel" [attr.aria-label]="t('Spielstand und Spielsteuerung', 'Scores and game controls')">
           <div class="score-heading"><h2>{{ t('Euer Spielstand', 'Your score') }}</h2><span aria-hidden="true">↗</span></div>
           <div class="player-card" [class.active]="result === null && currentPlayer === 'X'">
-            <span class="player-icon"><span class="symbol x" aria-hidden="true"></span></span><div><span class="player-name">{{ mode === 'single' ? t('Du · X', 'You · X') : t('Spieler X', 'Player X') }}</span><span class="player-caption">{{ result === 'X' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'X' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler X', 'Player X wins')">{{ scores.X }}</strong>
+            <span class="player-icon"><span class="symbol x" aria-hidden="true"></span></span><div><span class="player-name">{{ playerName('X') }} · X</span><span class="player-caption">{{ result === 'X' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'X' ? t('Du bist dran', 'Your turn') : t('Bereit für deinen Zug', 'Ready for your move') }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler X', 'Player X wins')">{{ scores.X }}</strong>
           </div>
           <div class="player-card" [class.active]="result === null && currentPlayer === 'O'">
-            <span class="player-icon"><span class="symbol o" aria-hidden="true"></span></span><div><span class="player-name">{{ mode === 'single' ? t('Computer · O', 'Computer · O') : t('Spieler O', 'Player O') }}</span><span class="player-caption">{{ result === 'O' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'O' ? (mode === 'single' ? t('Am Zug', 'To move') : t('Du bist dran', 'Your turn')) : (mode === 'single' ? t('Dein Gegenspieler', 'Your opponent') : t('Bereit für deinen Zug', 'Ready for your move')) }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler O', 'Player O wins')">{{ scores.O }}</strong>
+            <span class="player-icon"><span class="symbol o" aria-hidden="true"></span></span><div><span class="player-name">{{ playerName('O') }} · O</span><span class="player-caption">{{ result === 'O' ? t('Runde gewonnen', 'Round won') : result === null && currentPlayer === 'O' ? (mode === 'single' ? t('Am Zug', 'To move') : t('Du bist dran', 'Your turn')) : (mode === 'single' ? t('Dein Gegenspieler', 'Your opponent') : t('Bereit für deinen Zug', 'Ready for your move')) }}</span></div><strong class="score" [attr.aria-label]="t('Siege Spieler O', 'Player O wins')">{{ scores.O }}</strong>
           </div>
           <div class="draw-score"><span>{{ t('Unentschieden', 'Draw') }}</span><strong>{{ scores.draw }}</strong></div>
-          <div class="game-actions"><button #nextRound class="primary-button" type="button" [disabled]="busy" (click)="newRound()">{{ result === null ? t('Neue Runde', 'New round') : t('Nächste Runde', 'Next round') }} <span aria-hidden="true">→</span></button><button class="reset-button" type="button" [disabled]="busy" (click)="resetMatch()"><span aria-hidden="true">↺</span> {{ t('Spielstand zurücksetzen', 'Reset scores') }}</button></div>
+          <div class="game-actions"><button #nextRound class="primary-button" type="button" [disabled]="busy" (click)="newRound()">{{ matchWinner ? t('Neues Match', 'New match') : result === null ? t('Neue Runde', 'New round') : t('Nächste Runde', 'Next round') }} <span aria-hidden="true">→</span></button><button class="reset-button" type="button" [disabled]="busy" (click)="resetMatch()"><span aria-hidden="true">↺</span> {{ t('Spielstand zurücksetzen', 'Reset scores') }}</button></div>
           <p class="score-note">{{ t('Speichern und Laden erfolgt nur auf Knopfdruck. Ohne Server bleibt das Spiel in dieser Sitzung.', 'Save and load manually. Without a server, your game lasts for this session.') }}</p>
           <div class="storage-panel">
             @if (serverStorage) {

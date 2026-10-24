@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { App, bestComputerMove } from './app';
+import { App, bestComputerMove, computerMove } from './app';
 
 const LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -45,7 +45,7 @@ describe('Tic-Tac-Toe', () => {
   it('saves a snapshot with a private bearer key and reloads it', async () => {
     app.serverStorage = true;
     app.play(4);
-    const saved = { mode: 'local', board: [...app.board], startingPlayer: 'X', round: 1, scores: { X: 0, O: 0, draw: 0 } };
+    const saved = { mode: 'local', settings: { names: { X: '', O: '' }, difficulty: 'hard', targetWins: 0, lastMove: 4 }, board: [...app.board], startingPlayer: 'X', round: 1, scores: { X: 0, O: 0, draw: 0 } };
     const fetchSpy = window.fetch as jasmine.Spy;
     fetchSpy.and.resolveTo(new Response(JSON.stringify({ revision: 1 }), { status: 200 }));
     await app.transferState('save');
@@ -127,6 +127,58 @@ describe('Tic-Tac-Toe', () => {
     expect(app.mode).toBe('single');
     expect(app.moveCount).toBe(2);
     expect(app.currentPlayer).toBe('X');
+  });
+
+  it('uses safe player names and keeps them after a reset', () => {
+    app.updateName('X', '  Alex  ');
+    expect(app.playerName('X')).toBe('Alex');
+    expect(app.status).toBe('Alex ist am Zug');
+    app.updateName('O', 'a'.repeat(40));
+    expect(app.names.O.length).toBe(24);
+    app.resetMatch();
+    expect(app.playerName('X')).toBe('Alex');
+    app.setMode('single');
+    expect(app.playerName('X')).toBe('Du');
+    expect(app.playerName('O')).toBe('Computer');
+  });
+
+  it('completes a first-to-three match and starts a fresh match', () => {
+    app.setTarget('3');
+    app.scores = { X: 2, O: 0, draw: 0 };
+    [0, 3, 1, 4, 2].forEach(index => app.play(index));
+    expect(app.matchWinner).toBe('X');
+    expect(app.lastMove).toBe(2);
+    expect(app.status).toContain('gewinnt das Match');
+    app.newRound();
+    expect(app.matchWinner).toBeNull();
+    expect(app.scores.X).toBe(0);
+    expect(app.lastMove).toBeNull();
+    expect(app.round).toBe(1);
+  });
+
+  it('resets the match when changing difficulty but ignores invalid settings', () => {
+    app.play(0);
+    app.setDifficulty('easy');
+    expect(app.moveCount).toBe(0);
+    expect(app.difficulty).toBe('easy');
+    app.setDifficulty('invalid');
+    app.setTarget('99');
+    expect(app.difficulty).toBe('easy');
+    expect(app.targetWins).toBe(0);
+  });
+
+  it('renders names as plain text and exposes translated settings', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.componentInstance.updateName('X', '<b>Alex</b>');
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('.player-name')?.textContent).toContain('<b>Alex</b>');
+    expect(root.querySelector('.player-name b')).toBeNull();
+    expect(root.querySelectorAll('input[maxlength="24"]').length).toBe(2);
+    fixture.componentInstance.setMode('single');
+    fixture.componentInstance.toggleLanguage();
+    fixture.detectChanges();
+    expect(root.querySelector('#difficulty')?.textContent).toContain('Easy');
   });
 
   it('starts with nine empty fields and X', () => {
@@ -246,5 +298,22 @@ describe('Computer opponent', () => {
     }
     visit(Array(9).fill(null), true);
     visit(Array(9).fill(null), false);
+  });
+});
+
+describe('Difficulty levels', () => {
+  const board: ('X' | 'O' | null)[] = ['X', 'X', null, null, 'O', null, null, null, null];
+  it('uses a random free cell on easy without changing the board', () => {
+    const original = [...board];
+    expect(computerMove(board, 'easy', () => 0.99)).toBe(8);
+    expect(board).toEqual(original);
+  });
+  it('blocks threats and prioritizes its own win on medium', () => {
+    expect(computerMove(board, 'medium')).toBe(2);
+    expect(computerMove(['O', 'O', null, 'X', 'X', null, null, null, null], 'medium')).toBe(2);
+  });
+  it('uses perfect play on hard and handles a full board', () => {
+    expect(computerMove(board, 'hard')).toBe(bestComputerMove(board));
+    expect(computerMove(Array(9).fill('X'), 'easy')).toBeNull();
   });
 });

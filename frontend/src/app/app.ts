@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, QueryList, ViewChild, ViewChildren, OnInit, inject } from '@angular/core';
 
 type GameMode = 'single' | 'local';
+type Difficulty = 'easy' | 'medium' | 'hard';
 type Player = 'X' | 'O';
 type Result = Player | 'draw' | null;
 
@@ -14,11 +15,15 @@ const WINNING_LINES: readonly (readonly number[])[] = [
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrls: ['./app.css', './settings.css'],
 })
 export class App implements OnInit {
   private readonly document = inject(DOCUMENT);
   mode: GameMode = 'local';
+  difficulty: Difficulty = 'hard';
+  names = { X: '', O: '' };
+  targetWins = 0;
+  lastMove: number | null = null;
   language: 'de' | 'en' = 'de';
   darkMode = false;
   serverStorage = false;
@@ -89,7 +94,7 @@ export class App implements OnInit {
       const response = await fetch('api/state', {
         method: action === 'save' ? 'PUT' : 'GET',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: action === 'save' ? JSON.stringify({ state: { mode: this.mode, board: this.board, startingPlayer: this.startingPlayer, round: this.round, scores: this.scores }, revision: this.revision }) : undefined,
+        body: action === 'save' ? JSON.stringify({ state: { mode: this.mode, settings: { names: this.names, difficulty: this.difficulty, targetWins: this.targetWins, lastMove: this.lastMove }, board: this.board, startingPlayer: this.startingPlayer, round: this.round, scores: this.scores }, revision: this.revision }) : undefined,
         signal: AbortSignal.timeout(10000),
       });
       if (!response.ok) {
@@ -102,6 +107,10 @@ export class App implements OnInit {
         const state = body['state'];
         if (!isSavedGame(state)) throw new Error('Invalid saved game');
         this.mode = state.mode ?? 'local';
+        this.names = { ...(state.settings?.names ?? { X: '', O: '' }) };
+        this.difficulty = state.settings?.difficulty ?? 'hard';
+        this.targetWins = state.settings?.targetWins ?? 0;
+        this.lastMove = state.settings?.lastMove ?? null;
         this.board = [...state.board];
         this.startingPlayer = state.startingPlayer;
         this.round = state.round;
@@ -128,15 +137,44 @@ export class App implements OnInit {
   @ViewChildren('cell') private cells?: QueryList<ElementRef<HTMLButtonElement>>;
   @ViewChild('nextRound') private nextRoundButton?: ElementRef<HTMLButtonElement>;
 
+  playerName(player: Player): string {
+    if (this.mode === 'single') return player === 'X' ? this.t('Du', 'You') : this.t('Computer', 'Computer');
+    return this.names[player].trim() || this.t(`Spieler ${player}`, `Player ${player}`);
+  }
+
+  updateName(player: Player, value: string): void {
+    if (this.busy) return;
+    this.names = { ...this.names, [player]: value.slice(0, 24) };
+    this.storageMessage = null;
+  }
+
+  setDifficulty(value: string): void {
+    if (this.busy || (value !== 'easy' && value !== 'medium' && value !== 'hard') || this.difficulty === value) return;
+    this.difficulty = value;
+    this.resetMatch();
+  }
+
+  setTarget(value: string): void {
+    if (this.busy || (value !== '0' && value !== '3') || this.targetWins === Number(value)) return;
+    this.targetWins = Number(value);
+    this.resetMatch();
+  }
+
+  get matchWinner(): Player | null {
+    if (!this.targetWins) return null;
+    return this.scores.X >= this.targetWins ? 'X' : this.scores.O >= this.targetWins ? 'O' : null;
+  }
+
   get status(): string {
+    if (this.matchWinner) return this.t(`${this.playerName(this.matchWinner)} gewinnt das Match!`, `${this.playerName(this.matchWinner)} wins the match!`);
     if (this.result === 'draw') return this.t('Unentschieden. Gut gespielt!', 'A draw. Well played!');
     if (this.mode === 'single') {
       if (this.result === 'X') return this.t('Du gewinnst diese Runde!', 'You win this round!');
       if (this.result === 'O') return this.t('Der Computer gewinnt. Neue Chance?', 'The computer wins. Try again?');
       return this.currentPlayer === 'X' ? this.t('Du bist am Zug · X', 'Your move · X') : this.t('Der Computer ist am Zug · O', 'Computer to move · O');
     }
-    if (this.result) return this.t(`${this.result} gewinnt diese Runde!`, `${this.result} wins this round!`);
-    return this.t(`${this.currentPlayer} ist am Zug`, `${this.currentPlayer} to move`);
+    if (this.result) return this.t(`${this.names[this.result].trim() || this.result} gewinnt diese Runde!`, `${this.names[this.result].trim() || this.result} wins this round!`);
+    return this.t(`${this.names[this.currentPlayer].trim() || this.currentPlayer} ist am Zug`, `${this.names[this.currentPlayer].trim() || this.currentPlayer} to move`);
   }
 
   get moveCount(): number {
@@ -144,7 +182,7 @@ export class App implements OnInit {
   }
 
   play(index: number): void {
-    if (this.busy || !Number.isInteger(index) || index < 0 || index > 8 || this.board[index] !== null || this.result !== null) return;
+    if (this.busy || !Number.isInteger(index) || index < 0 || index > 8 || this.board[index] !== null || this.result !== null || this.matchWinner) return;
     if (this.mode === 'single' && this.currentPlayer === 'O') return;
     this.makeMove(index);
     this.playComputer();
@@ -157,13 +195,14 @@ export class App implements OnInit {
   }
 
   private playComputer(): void {
-    if (this.busy || this.mode !== 'single' || this.currentPlayer !== 'O' || this.result !== null) return;
-    const index = bestComputerMove(this.board);
+    if (this.busy || this.matchWinner || this.mode !== 'single' || this.currentPlayer !== 'O' || this.result !== null) return;
+    const index = computerMove(this.board, this.difficulty);
     if (index !== null) this.makeMove(index);
   }
 
   private makeMove(index: number): void {
     this.storageMessage = null;
+    this.lastMove = index;
     const player = this.currentPlayer;
     this.board = this.board.map((cell, position) => position === index ? player : cell);
     const line = WINNING_LINES.find((positions) => positions.every((position) => this.board[position] === player));
@@ -182,6 +221,7 @@ export class App implements OnInit {
 
   newRound(): void {
     if (this.busy) return;
+    if (this.matchWinner) { this.resetMatch(); return; }
     this.storageMessage = null;
     this.round += 1;
     this.startingPlayer = this.startingPlayer === 'X' ? 'O' : 'X';
@@ -198,10 +238,12 @@ export class App implements OnInit {
   }
 
   cellLabel(index: number): string {
-    return this.t(`Zeile ${Math.floor(index / 3) + 1}, Spalte ${index % 3 + 1}: ${this.board[index] ?? 'frei'}`, `Row ${Math.floor(index / 3) + 1}, column ${index % 3 + 1}: ${this.board[index] ?? 'empty'}`);
+    const label = this.t(`Zeile ${Math.floor(index / 3) + 1}, Spalte ${index % 3 + 1}: ${this.board[index] ?? 'frei'}`, `Row ${Math.floor(index / 3) + 1}, column ${index % 3 + 1}: ${this.board[index] ?? 'empty'}`);
+    return this.lastMove === index ? `${label}, ${this.t('letzter Zug', 'last move')}` : label;
   }
 
   private clearBoard(): void {
+    this.lastMove = null;
     this.board = Array.from({ length: 9 }, () => null);
     this.currentPlayer = this.startingPlayer;
     this.result = null;
@@ -212,7 +254,15 @@ export class App implements OnInit {
   }
 }
 
+interface GameSettings {
+  names: { X: string; O: string };
+  difficulty: Difficulty;
+  targetWins: number;
+  lastMove: number | null;
+}
+
 interface SavedGame {
+  settings?: GameSettings;
   mode?: GameMode;
   board: (Player | null)[];
   startingPlayer: Player;
@@ -230,6 +280,16 @@ function isSavedGame(value: unknown): value is SavedGame {
       !Number.isSafeInteger(value['round']) || Number(value['round']) < 1 || Number(value['round']) > 1000000 ||
       value['startingPlayer'] !== (Number(value['round']) % 2 ? 'X' : 'O') || !isRecord(value['scores'])) return false;
   if (value['mode'] !== undefined && value['mode'] !== 'single' && value['mode'] !== 'local') return false;
+  if (value['settings'] !== undefined) {
+    const settings = value['settings'];
+    if (!isRecord(settings)) return false;
+    const names = settings['names'];
+    if (!isRecord(names) ||
+        !['X', 'O'].every(key => typeof names[key] === 'string' && names[key].length <= 24) ||
+        !['easy', 'medium', 'hard'].includes(String(settings['difficulty'])) ||
+        (settings['targetWins'] !== 0 && settings['targetWins'] !== 3) ||
+        (settings['lastMove'] !== null && (!Number.isInteger(settings['lastMove']) || Number(settings['lastMove']) < 0 || Number(settings['lastMove']) > 8 || value['board'][Number(settings['lastMove'])] === null))) return false;
+  }
   const scores = value['scores'];
   return ['X', 'O', 'draw'].every(key => Number.isSafeInteger(scores[key]) && Number(scores[key]) >= 0 && Number(scores[key]) <= Number(value['round']));
 }
@@ -262,4 +322,20 @@ export function bestComputerMove(board: readonly (Player | null)[]): number | nu
     if (score > bestScore) { bestScore = score; bestMove = index; }
   }
   return bestMove;
+}
+
+export function computerMove(board: readonly (Player | null)[], difficulty: Difficulty, random = Math.random): number | null {
+  const available = board.flatMap((cell, index) => cell === null ? [index] : []);
+  if (!available.length) return null;
+  if (difficulty === 'hard') return bestComputerMove(board);
+  if (difficulty === 'medium') {
+    for (const player of ['O', 'X'] as const) {
+      for (const index of available) {
+        const next = [...board];
+        next[index] = player;
+        if (WINNING_LINES.some(line => line.every(cell => next[cell] === player))) return index;
+      }
+    }
+  }
+  return available[Math.floor(random() * available.length)];
 }
