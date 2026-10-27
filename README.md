@@ -1,123 +1,134 @@
 # Spielzeit · Tic-Tac-Toe
 
-**Ein Gerät. Zwei Köpfe. Drei in einer Reihe.**
+Drei in einer Reihe – alleine, zu zweit an einem Gerät oder online auf zwei verschiedenen Rechnern.
 
-Ein vollständiges Tic-Tac-Toe für zwei Personen an einem Gerät – mit ruhigen Farben, einer responsiven Oberfläche und direktem Einstieg ohne Login.
+[**Jetzt im Browser spielen ↗**](https://michkffm.github.io/Tic-Tac-Toe/)
 
-## Spielen
+![Online-Spiel mit zwei unabhängigen Sitzungen](docs/online-multiplayer.jpg)
 
-**[Spiel im Browser öffnen ↗](https://michkffm.github.io/Tic-Tac-Toe/)**
+## Spielmodi
 
-- Abwechselnd freie Felder wählen: X beginnt die erste Runde.
-- Drei gleiche Zeichen waagerecht, senkrecht oder diagonal gewinnen.
-- Gewinnerkennung, Hervorhebung der Gewinnreihe und Unentschieden sind integriert.
-- **Nächste Runde** behält den Spielstand und wechselt die beginnende Person.
-- **Neue Runde** kann auch eine laufende Runde ohne Punkte beenden.
-- **Spielstand zurücksetzen** startet bei Runde 1 und null Punkten.
+- **Alleine:** Du spielst X gegen den Computer O. Leicht wählt zufällig; Mittel nutzt sofortige Gewinnchancen und blockiert direkte Gefahren; Schwer plant mit Minimax und ist nicht besiegbar.
+- **Zu zweit:** Abwechselnd an einem Gerät spielen. Optional eigene Namen mit maximal 24 Zeichen eingeben.
+- **Online mit Freunden:** Auf zwei Geräten mit einem privaten Einladungslink spielen. Ohne Konto oder Installation.
 
-- **Hell/Dunkel**: berücksichtigt beim ersten Start die Systemeinstellung; die Auswahl bleibt im Browser gespeichert.
-- **Deutsch/English**: übersetzt Oberfläche, Meldungen und zugängliche Feldbeschriftungen; die Auswahl bleibt gespeichert.
-- **Speichern/Laden**: im Flask-Betrieb werden Spielfeld, Runde und Punkte auf dem Server gespeichert. Dies geschieht ausdrücklich per Knopfdruck, nicht automatisch. Nach dem Neuladen mit **Laden** fortsetzen.
+Hell-/Dunkelmodus und Deutsch/English bleiben im Browser gespeichert. Punkte, Runden, ein optionales Match bis drei Siege, Gewinnreihen und die Markierung des letzten Zugs sind integriert. Der Startspieler wechselt je Runde. Bei einem lokalen Moduswechsel oder einer Änderung von Schwierigkeit/Matchart startet ein neues Match.
 
-Ohne Server gelten die Punkte nur für die aktuelle Sitzung. Die GitHub-Pages-Version bleibt ein statisches Spiel ohne Serverspeicherung. Die neuen Funktionen sind zunächst für den lokalen Betrieb vorbereitet; ein öffentliches Backend ist noch nicht eingerichtet. Es gibt keinen Computergegner oder Online-Multiplayer.
+## Online spielen
 
-## Lokal starten
+1. Auf der Spielseite **Online mit Freunden** auswählen.
+2. Optional einen Namen und „Freies Spiel“ oder „Bis drei Siege“ wählen.
+3. **Privaten Raum erstellen** anklicken. Du erhältst X.
+4. Den angezeigten Link kopieren und privat an den Mitspieler senden.
+5. Der Mitspieler öffnet ihn auf seinem Rechner, gibt optional einen Namen ein und wählt **Raum beitreten**. Er erhält O.
+6. Der Server prüft die Züge und überträgt den Spielstand. Nach Rundenende kann einer von euch **Nächste Runde** wählen; nach drei Siegen beginnt **Neues Match** wieder bei null.
 
-Voraussetzungen: **Node.js 24** und npm.
+Der Link enthält nur die zufällige Raumnummer. Wer zuerst beitritt, erhält den zweiten Platz: deshalb nicht öffentlich posten. Ein dritter Spieler kann nicht beitreten. Spielerzugänge werden separat als zufällige Schlüssel in `sessionStorage` des jeweiligen Tabs gespeichert und nicht im Einladungslink übertragen. Neuladen im selben Tab stellt den Platz wieder her; nach Schließen des Tabs ist eine Wiederherstellung nicht garantiert. Ein belegter Platz wird nicht an andere Besucher freigegeben. Falls ein Spieler den Zugang verliert, erstellt einen neuen Raum.
 
-```bash
-git clone https://github.com/michkffm/Tic-Tac-Toe.git
-cd Tic-Tac-Toe/frontend
-npm ci --ignore-scripts
-npm start
+Der Spielstand wird alle vier Sekunden abgefragt. Deshalb kann ein fremder Zug bis zu einigen Sekunden benötigen. „Mitspieler verbunden“ bedeutet Kontakt innerhalb der letzten 20 Sekunden. Bei Netzproblemen erscheint eine Meldung; bestehende Sitzungen versuchen erneut zu verbinden. Nur der Spieler am Zug kann freie Felder belegen. Punkte und Runden werden ausschließlich auf dem Server berechnet.
+
+### Kostenloser Betrieb und Grenzen
+
+Die Oberfläche liegt auf **GitHub Pages**, das Online-Backend auf **Render Free** in Frankfurt:
+
+- API: `https://spielzeit-michkffm-online.onrender.com`
+- Gesundheitsprüfung: `/health`
+- Räume werden ausschließlich im Arbeitsspeicher gehalten: maximal 100 gleichzeitig und höchstens zwei Stunden ab Erstellung.
+- Neustart, Redeploy oder Ruhezustand des Servers löscht die Räume. Es gibt keine dauerhafte Online-Rangliste oder Speicherung dieser Partien.
+- Render Free schläft nach 15 Minuten ohne eingehende Aktivität ein. Beim nächsten Aufruf kann der Start ungefähr eine Minute dauern. Die Oberfläche wartet beim Verbindungsaufbau entsprechend länger.
+- Die kostenlosen Laufzeit-, Bandbreiten- und Buildkontingente gelten für den gesamten Render-Workspace. Die Anwendung ist für gelegentliche private Partien gedacht, ohne Verfügbarkeitsgarantie.
+- Online-Namen und Spielstände werden nur für die Raumdauer gehalten. Render verarbeitet Verbindungsmetadaten nach seinen Bedingungen. Namen sind innerhalb des Raums für beide Spieler sichtbar.
+
+[Render: kostenlose Dienste und Grenzen](https://render.com/docs/free)
+
+## Lokal entwickeln
+
+Voraussetzungen: Node.js 24, npm und Python 3.13 oder neuer. Es werden Angular 20 und Flask verwendet; die installierten Paketversionen stehen in den Lock-/Requirements-Dateien.
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r backend/render-requirements.txt
+npm --prefix frontend ci --ignore-scripts
+npm --prefix frontend run build
 ```
 
-Danach `http://localhost:4200/` öffnen. Das Spiel unterstützt Maus, Touch und Tastatur über Tab sowie Enter/Leertaste. Felder und Spielstatus besitzen zugängliche Beschriftungen; reduzierte Animationen werden berücksichtigt.
+Für einen lokalen Online-Test in `frontend/dist/frontend/browser/config.json` ausschließlich im gebauten Ergebnis eintragen:
 
-## Mit lokalem Backend und dauerhafter Speicherung starten
+```json
+{"serverStorage": false, "onlineApi": "http://127.0.0.1:8812"}
+```
 
-Voraussetzungen: Python 3.12 oder neuer, Node.js 24, npm. Frontend und API werden über dieselbe Adresse ausgeliefert; es ist keine zusätzliche JavaScript-Produktionsabhängigkeit nötig. SQLite gehört zur Python-Standardbibliothek.
+In einem Terminal das Backend starten:
 
-Im Repository-Hauptordner:
+```sh
+GAME_ALLOWED_ORIGIN=http://127.0.0.1:8811 GAME_DISABLE_SAVES=1 \
+.venv/bin/gunicorn --workers 1 --threads 8 --bind 127.0.0.1:8812 'backend.app:create_app()'
+```
 
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r backend/requirements.txt
-cd frontend
-npm ci --ignore-scripts
-npm run build -- --base-href /
-cd ..
+In einem zweiten Terminal die Oberfläche starten:
+
+```sh
+python3 -m http.server 8811 --bind 127.0.0.1 --directory frontend/dist/frontend/browser
+```
+
+`http://127.0.0.1:8811/` in zwei unabhängigen Tabs/Browsern öffnen. Diese Adressen sind nur lokal erreichbar. Der nächste Build ersetzt die temporäre lokale Konfiguration wieder durch `frontend/public/config.json`.
+
+Für die reine Frontendentwicklung: `npm --prefix frontend start`. Bei einer anderen Vorschauadresse muss `GAME_ALLOWED_ORIGIN` exakt angepasst werden.
+
+## Lokale Serverspielstände
+
+Die bisherige manuelle SQLite-Speicherung für lokale Einzel-/Zweispielerpartien bleibt verfügbar. Online-Partien verwenden sie nicht. Das öffentliche Render-Backend deaktiviert diese Funktion ausdrücklich, da Render Free keinen persistenten Datenträger bereitstellt.
+
+Für lokalen Betrieb mit SQLite:
+
+```sh
+npm --prefix frontend run build
 .venv/bin/python -m flask --app backend.app:create_app run --host 127.0.0.1 --port 8772
 ```
 
-Danach **http://127.0.0.1:8772/** öffnen. Unter Windows entsprechend `.venv/Scripts/python` verwenden. `npm start` startet ausschließlich das Frontend; für die Serverspeicherung den gemeinsamen Flask-Start oben verwenden.
+Unter `http://127.0.0.1:8772/` erlauben **Speichern/Laden** die manuelle Sicherung. Ohne vorheriges Speichern gehen neue lokale Züge beim Neuladen verloren. Der Browser hält einen zufälligen 256-Bit-Schlüssel; SQLite speichert dessen Hash. Löschen der Browserdaten entfernt den Zugang. Revisionsnummern verhindern unbemerktes Überschreiben durch andere Tabs. Die Datei `backend/instance/games.sqlite3` wird von Git ignoriert. Ältere Spielstände bleiben kompatibel. Der Flask-Entwicklungsserver ist nur für lokale Entwicklung vorgesehen.
 
-Der Zugang zum eigenen Spielstand liegt als zufälliger 256-Bit-Schlüssel in diesem Browser. Der Server speichert nur dessen Hash. Es gibt keine Konten und keine geräteübergreifende Wiederherstellung: Wer Browserdaten löscht oder einen anderen Browser bzw. eine andere Adresse verwendet, hat keinen Zugriff auf den bisherigen Spielstand. Den Schlüssel nicht weitergeben. Es werden keine Spielernamen erhoben.
-
-Die SQLite-Datei `backend/instance/games.sqlite3` bleibt bei Neustarts erhalten und wird von Git ignoriert. **Spielstand zurücksetzen** setzt das aktuelle Spiel zurück; erst **Speichern** überschreibt den Serverstand. Ohne vorheriges Speichern gehen neue Züge beim Neuladen verloren. Für einen bereits existierenden Serverstand zuerst **Laden** wählen, bevor er erneut gespeichert wird. Revisionsnummern verhindern unbemerktes Überschreiben aus mehreren Tabs.
-
-| Umgebungsvariable | Standard / Zweck |
+| Variable | Zweck |
 | --- | --- |
-| `GAME_DATABASE` | `backend/instance/games.sqlite3`; auf einen dauerhaft gespeicherten, beschreibbaren Pfad setzen |
-| `GAME_FRONTEND` | `frontend/dist/frontend/browser`; Verzeichnis des gebauten Frontends |
-
-`GET /config.json` aktiviert die Serverfunktionen im Flask-Betrieb. Die statische `frontend/public/config.json` deaktiviert sie für GitHub Pages. `GET /api/state` lädt, `PUT /api/state` speichert `{state, revision}`; beide benötigen `Authorization: Bearer <Browser-Schlüssel>`. Antworten: 400 ungültige Daten, 401 fehlender Zugang, 404 kein Spielstand, 409 veraltete Revision, 413 zu große Anfrage, 415 falscher Inhaltstyp, 429 Anfragelimit, 503 Speicher nicht verfügbar. API-Antworten sind nicht cachebar.
-
-## Tests und Build
-
-```bash
-cd frontend
-npm test -- --watch=false --browsers=ChromeHeadless
-npm run build -- --base-href /Tic-Tac-Toe/
-npm audit --omit=dev
-```
-
-Für die Tests muss Chrome installiert sein; gegebenenfalls dessen Pfad über `CHROME_BIN` angeben.
-
-Die Frontend-Tests prüfen zusätzlich Sprache, Theme, Speicherung und Fehlerfälle sowie alle acht Gewinnlinien, O-Sieg, Remis, Sieg im neunten Zug, ungültige und doppelte Züge, Schutz nach Rundenende, Spielstand, Rundenwechsel und die Bedienung über die tatsächlichen Spielfeld-Buttons. Lokal mit Node 24 auf macOS geprüft.
-
-Backend-Tests im Repository-Hauptordner:
-
-```bash
-.venv/bin/python -m unittest discover -s backend -v
-```
-
-Sie prüfen dauerhafte Speicherung nach App-Neustart, Zugriffstrennung, Revisionen, ungültige Eingaben, Größenlimit, Sicherheitsheader und Anfragelimits. Zusätzlich werden alle 5.478 erreichbaren Spielfelder für beide Startspieler geprüft.
+| `GAME_ALLOWED_ORIGIN` | Exakte zulässige Browser-Origin für Online-Räume; öffentlich `https://michkffm.github.io` |
+| `GAME_DISABLE_SAVES` | `1` deaktiviert die SQLite-Speicher-API und deren UI-Konfiguration |
+| `GAME_DATABASE` | Lokaler SQLite-Pfad, Standard `backend/instance/games.sqlite3` |
+| `GAME_FRONTEND` | Pfad zum Frontend-Build, Standard `frontend/dist/frontend/browser` |
+| `PORT` | Von Render vorgegebener Port für Gunicorn |
 
 ## Veröffentlichung
 
-GitHub Pages veröffentlicht den statischen Angular-Build. Der Workflow unter `.github/workflows/pages.yml` führt bei einem Push auf `main` Backend-Tests, Installation, Prüfung der Frontend-Produktionspakete, Frontend-Tests und Build aus und veröffentlicht nur das Browser-Artefakt. Unter **Settings → Pages → Source** ist **GitHub Actions** vorgesehen.
+`.github/workflows/pages.yml` prüft Backend und Frontend, führt den Produktions-Audit aus und veröffentlicht die statische Oberfläche bei Push auf `main`. `frontend/public/config.json` benennt die öffentliche Online-API. Keine geheimen Schlüssel werden in der Oberfläche gespeichert.
 
-Für die statische Veröffentlichung werden keine geheimen Schlüssel benötigt. Ein öffentliches Backend benötigt einen separaten Hosting-Dienst mit dauerhaftem Datenträger, HTTPS und einem Produktions-WSGI-Server. Flask weist ausdrücklich darauf hin, den Entwicklungsserver nicht öffentlich zu betreiben: [Flask Deployment-Dokumentation](https://flask.palletsprojects.com/en/stable/deploying/). Hosting und neue Produktionspakete werden vor diesem Schritt gemeinsam ausgewählt.
+`render.yaml` dokumentiert den kostenlosen Python-Webdienst; `.python-version` verwendet die aktuelle Patchversion von Python 3.13. **Gunicorn ist die einzige neue Produktionsabhängigkeit** und dient als produktiver WSGI-Server. Es muss genau **ein Worker-Prozess mit mehreren Threads** laufen, da die Räume im Prozessspeicher liegen. Mehrere Worker oder Instanzen benötigen eine gemeinsame Datenhaltung und sind nicht Teil dieser Version.
 
-Das lokale Anfragelimit beträgt 60 API-Anfragen je IP und Minute pro Prozess, maximal 10.000 gespeicherte Browser-Spielstände und 4 KiB je Anfrage. Vor öffentlichem Hosting sind Anfragelimits am Reverse Proxy, dessen IP-Vertrauen, Datenbank-Backups und ein Verfahren zur Bereinigung verwaister Spielstände einzurichten. SQLite benötigt einen persistenten Datenträger; ein flüchtiges Container-Dateisystem reicht nicht aus.
+Bei manueller Einrichtung auf Render: öffentliches Repository `michkffm/Tic-Tac-Toe`, Branch `main`, Repository-Wurzel, Python, Region Frankfurt, Tarif **Free**. Build: `pip install -r backend/render-requirements.txt`. Start: `gunicorn --workers 1 --threads 8 --bind 0.0.0.0:$PORT 'backend.app:create_app()'`. Health Check: `/health`. Umgebungsvariablen siehe `render.yaml`.
 
-Die Spielstände stammen aus lokalen Partien und sind keine manipulationssichere Rangliste. Das Backend validiert Spielfeld, Zugverteilung, Gewinner und Wertebereiche; es bestätigt keine früheren Partien anhand einer serverseitigen Zugchronik.
+Bei Anbindung über „Public Git Repository“ wird nicht automatisch jeder Push deployed; nach Backend-Änderungen auf Render **Manual Deploy → Deploy latest commit** verwenden. Alternativ kann die Blueprint-Konfiguration angebunden werden. Redeploys beenden bestehende Online-Räume.
 
- Die offiziellen Actions sind auf feste Commit-IDs gebunden; nur der Deployment-Job erhält die für Pages erforderlichen Schreibrechte.
+## Tests und Sicherheit
 
-## Projektstruktur
+```sh
+.venv/bin/python -m unittest discover -s backend -v
+CHROME_BIN='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+  npm --prefix frontend test -- --watch=false --browsers=ChromeHeadless
+npm --prefix frontend run build -- --base-href /Tic-Tac-Toe/
+npm --prefix frontend audit --omit=dev
+git diff --check
+```
 
-| Pfad | Inhalt |
-| --- | --- |
-| `frontend/src/app/app.ts` | Spielzustand, Zugprüfung, Gewinnerkennung und Punkte |
-| `frontend/src/app/app.html` | Spielfeld, Spielstand und Bedienung |
-| `frontend/src/app/app.css` | Responsives Layout und Gestaltung |
-| `frontend/src/app/app.spec.ts` | Spiel- und Oberflächentests |
-| `.github/workflows/pages.yml` | Tests und Veröffentlichung |
-| `backend/app.py` | Flask-API, Zugriffsschutz, Validierung und SQLite-Speicherung |
-| `backend/test_app.py` | API-, Persistenz- und Grenzfalltests |
+Unter anderen Betriebssystemen Chrome-Pfad anpassen oder `CHROME_BIN` weglassen, wenn Chrome automatisch gefunden wird.
 
-## Sicherheit und Abhängigkeiten
+Die Tests prüfen die bisherigen lokalen Spielmodi, alle Gewinnlinien und erreichbaren Spielfelder sowie Online-Zugrechte, Drittspieler-Ausschluss, parallele Beitritte, Revisionen, Unentschieden, Rundenwechsel, Matchgewinn, Ablauf, Präsenz, CORS, private Schlüssel, Wiederherstellung und Fehlerfälle. Der Browser-Abgleich wird mit zwei getrennten Spielsitzungen durchgeführt; dies ersetzt keinen Lasttest und keine Verfügbarkeitsgarantie.
 
-Das Spiel verarbeitet keine Konten oder hochgeladenen Dateien. Server-Spielstände enthalten ausschließlich Spielfeld, Punkte und Runde. Unzulässige und nachträgliche Spielzüge werden auch in der Spiellogik abgewehrt. Es gibt keine eingebetteten Zugangsdaten.
+Alle Spielbefehle werden serverseitig validiert und unter einer Sperre verarbeitet. Spieler-Schlüssel werden ausschließlich in Authorization-Headern übertragen und serverseitig gehasht gehalten. Kein Schlüssel erscheint in URLs oder API-Antworten. Der Raumschlüssel im Einladungslink vermittelt nur den noch freien zweiten Platz. API-Antworten sind nicht cachebar. CORS gibt nur die konfigurierte Origin frei. Anfragen sind auf 4 KiB begrenzt; maximal 240 Online- bzw. 60 Speicher-API-Anfragen je Verbindung-IP und Minute im Prozess. Forwarded-IP-Header werden bewusst nicht vertraut; hinter einem Proxy können mehrere Besucher dieselbe Begrenzung teilen. Diese Hobby-Konfiguration ersetzt keinen Schutz für einen großen öffentlichen Spieledienst.
 
-Der aktualisierte Produktionspaketstand meldete beim Abgleich am 23. Oktober 2026 **keine bekannten Schwachstellen**. In der separaten Karma-Testwerkzeugkette bestehen noch sechs abhängige Audit-Hinweise zu einem `braces`-Problem; npm bietet dafür im bestehenden Setup keinen passenden stabilen Fix an. Diese Werkzeuge werden nicht in die statische Website eingebunden. Die bestehenden Flask-/Werkzeug-Anforderungen wurden innerhalb ihrer stabilen Versionsreihe aktualisiert; der Abgleich der sieben Backend-Pakete am 23. Oktober 2026 meldete keine bekannten Schwachstellen. Datenbankzugriffe sind parametrisiert, Eingaben werden validiert und fremde Browser-Origin-Zugriffe erhalten keine CORS-Freigabe.
+## Struktur
 
-`node_modules` und Build-Ergebnisse gehören nicht ins Repository. Abhängigkeiten werden aus `package-lock.json` mit `npm ci` reproduziert.
-
-### Spielmodi
-
-Die Auswahlkarten wechseln zwischen einem lokalen Duell zu zweit und einem Einzelspiel gegen den Computer. Im Einzelspiel übernimmt der Mensch X und der Computer O. Auf Schwer sucht der Computer mit Minimax den besten Zug und kann nicht besiegt werden. Leicht wählt zufällige freie Felder; Mittel nutzt unmittelbare Gewinnchancen und blockiert direkte Gefahren. Der Rundenbeginn wechselt weiterhin; ein Moduswechsel setzt das Match zurück. Serverspielstände enthalten den Spielmodus; ältere Spielstände werden als Zweispielermodus geladen.
-
-Im Zweispielermodus sind optionale Namen (maximal 24 Zeichen) möglich. Freies Spiel oder ein Match bis drei Siege sind wählbar. Ein Punkt markiert den letzten Zug; beim Matchgewinn erscheint eine kurze Animation (mit Rücksicht auf reduzierte Bewegung). Geänderte Schwierigkeit oder Matchart starten ein neues Match, Namen bleiben dabei erhalten. Die Einstellungen werden bei manueller Serverspeicherung mitgesichert; alte Spielstände bleiben kompatibel.
+- `frontend/src/app/app.*`: lokale Modi, Computergegner, Namen, Punkte, Sprache und Theme.
+- `frontend/src/app/online-game.*`, `online.css`: Online-UI, Raumverbindung und Wiederverbindung.
+- `backend/app.py`: Flask, Schutzmaßnahmen, lokale SQLite-Speicherstände.
+- `backend/online.py`: flüchtige Online-Räume und serverseitige Spielregeln.
+- `backend/test_*.py`, `frontend/src/app/*.spec.ts`: automatisierte Prüfungen.
+- `render.yaml`, `.python-version`, `backend/render-requirements.txt`: Produktionsbetrieb.
+- `docs/online-multiplayer.jpg`: Screenshot der realen Online-Oberfläche mit Testnamen Alex und Sam.

@@ -1,0 +1,39 @@
+<section class="online-section" [attr.aria-label]="t('Online mit Freunden', 'Online with friends')">
+  <p class="online-intro">{{ t('Zwei Rechner. Ein Duell. Ohne Konto.', 'Two computers. One duel. No account.') }}</p>
+  @if (!api) { <p role="status">{{ t('Online-Modus wird geladen oder ist noch nicht konfiguriert.', 'Online mode is loading or is not configured yet.') }}</p> }
+  @if (!room) {
+    <div class="match-settings">
+      <label for="online-name">{{ t('Dein Name (optional)', 'Your name (optional)') }}<input #playerName id="online-name" maxlength="24" [value]="name" [disabled]="busy" (input)="name = playerName.value"></label>
+      <label for="online-target">{{ t('Neues Match', 'New match') }}<select #targetSelect id="online-target" [value]="target" [disabled]="busy" (change)="target = targetSelect.value"><option value="0">{{ t('Freies Spiel', 'Free play') }}</option><option value="3">{{ t('Bis drei Siege', 'First to three wins') }}</option></select></label>
+    </div>
+    <button class="primary-button online-create" type="button" [disabled]="busy || !api" (click)="enter(false)">{{ t('Privaten Raum erstellen', 'Create private room') }} <span aria-hidden="true">↗</span></button>
+    <div class="match-settings online-join"><label for="room-code">{{ t('Einladungslink oder Raumcode', 'Invitation link or room code') }}<input #roomCode id="room-code" [value]="code" [disabled]="busy" maxlength="300" (input)="code = roomCode.value"></label><button class="primary-button" type="button" [disabled]="busy || !api || !code" (click)="enter(true)">{{ t('Raum beitreten', 'Join room') }}</button></div>
+  } @else {
+    <div class="online-room-header"><strong>{{ t('Du spielst', 'You play') }} {{ room.player }} · {{ playerName(room.player) }}</strong><button class="reset-button" type="button" [disabled]="busy" (click)="leave()">{{ t('Raum verlassen', 'Leave room') }}</button></div>
+    <div class="match-settings online-invite"><label for="invite">{{ t('Diesen Link an deinen Mitspieler senden', 'Send this link to your opponent') }}<input id="invite" readonly [value]="invite"></label><button class="primary-button" type="button" (click)="copyInvite()">{{ copied ? t('Kopiert ✓', 'Copied ✓') : t('Link kopieren', 'Copy link') }}</button></div>
+    <p class="online-presence" role="status">{{ !room.joined ? t('Zweiter Platz ist noch frei.', 'The second seat is still free.') : room.opponentOnline ? t('Mitspieler verbunden', 'Opponent connected') : t('Mitspieler nicht erreichbar. Der Platz bleibt reserviert.', 'Opponent unavailable. Their seat remains reserved.') }}</p>
+    <div class="turn-status" role="status" aria-live="polite">{{ status }}</div>
+    <div class="game-layout">
+      <div class="board-column">
+        <p class="round-label">{{ t('Runde', 'Round') }} {{ room.round }} · {{ room.targetWins ? t('Bis drei Siege', 'First to three wins') : t('Freies Spiel', 'Free play') }}</p>
+        <div class="board" role="group" [attr.aria-label]="t('Online-Spielfeld', 'Online board')">
+          @for (value of room.board; track $index) {
+            <button type="button" class="cell" [class.last-move]="room.lastMove === $index" [class.cell-x]="value === 'X'" [class.cell-o]="value === 'O'" [disabled]="!canPlay || value !== null" [attr.aria-label]="t('Feld', 'Cell') + ' ' + ($index + 1) + ': ' + (value || t('frei', 'empty'))" (click)="move($index)">
+              @if (value) { <span class="symbol" [class.x]="value === 'X'" [class.o]="value === 'O'" aria-hidden="true"></span> }
+            </button>
+          }
+        </div>
+      </div>
+      <aside class="match-panel">
+        <h2 class="online-score-title">{{ t('Euer Spielstand', 'Your score') }}</h2>
+        <div class="player-card" [class.active]="room.currentPlayer === 'X'"><span class="player-name">{{ playerName('X') }} · X</span><strong class="score">{{ room.scores.X }}</strong></div>
+        <div class="player-card" [class.active]="room.currentPlayer === 'O'"><span class="player-name">{{ playerName('O') }} · O</span><strong class="score">{{ room.scores.O }}</strong></div>
+        <div class="draw-score"><span>{{ t('Unentschieden', 'Draws') }}</span><strong>{{ room.scores.draw }}</strong></div>
+        <button class="primary-button" type="button" [disabled]="busy || !connected || !room.result" (click)="nextRound()">{{ winner ? t('Neues Match', 'New match') : t('Nächste Runde', 'Next round') }} →</button>
+      </aside>
+    </div>
+  }
+  @if (busy) { <p class="online-message" role="status">{{ t('Verbinde … Beim ersten Start bitte bis zu einer Minute warten.', 'Connecting … The first start may take up to a minute.') }}</p> }
+  @if (error) { <p class="online-message" role="alert">{{ error }}</p> }
+  <p class="mode-note">{{ t('Nur an deinen Mitspieler weitergeben: Wer den Link zuerst öffnet und beitritt, erhält den zweiten Platz. Räume gelten maximal zwei Stunden und gehen bei Serverneustarts verloren. Dein Spielerzugang bleibt in diesem Tab gespeichert.', 'Share only with your opponent: the first person to join with the link takes the second seat. Rooms last up to two hours and are lost on server restarts. Your player access is kept in this tab.') }}</p>
+</section>

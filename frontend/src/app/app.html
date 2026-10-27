@@ -18,7 +18,7 @@
     </section>
 
     <section class="game" [attr.aria-label]="t('Tic-Tac-Toe', 'Tic-Tac-Toe')">
-      <div class="game-topline"><span class="game-tag">TIC-TAC-TOE</span><span class="round-label">{{ t('RUNDE', 'ROUND') }} {{ round.toString().padStart(2, '0') }}</span></div>
+      <div class="game-topline"><span class="game-tag">TIC-TAC-TOE</span><span class="round-label" [hidden]="mode === 'online'">{{ t('RUNDE', 'ROUND') }} {{ round.toString().padStart(2, '0') }}</span></div>
       <div class="mode-picker" role="group" [attr.aria-label]="t('Spielmodus wählen', 'Choose game mode')">
         <button type="button" class="mode-card" [class.selected]="mode === 'single'" [attr.aria-pressed]="mode === 'single'" [disabled]="busy" (click)="setMode('single')">
           <span class="mode-icon" aria-hidden="true">✦</span><span><strong>{{ t('Alleine spielen', 'Play solo') }}</strong><small>{{ t('Du gegen den Computer', 'You against the computer') }}</small></span><span class="mode-check" aria-hidden="true">{{ mode === 'single' ? '✓' : '→' }}</span>
@@ -26,7 +26,15 @@
         <button type="button" class="mode-card" [class.selected]="mode === 'local'" [attr.aria-pressed]="mode === 'local'" [disabled]="busy" (click)="setMode('local')">
           <span class="mode-icon" aria-hidden="true">XO</span><span><strong>{{ t('Zu zweit spielen', 'Play together') }}</strong><small>{{ t('Ein Gerät. Euer Duell.', 'One device. Your duel.') }}</small></span><span class="mode-check" aria-hidden="true">{{ mode === 'local' ? '✓' : '→' }}</span>
         </button>
+        <button type="button" class="mode-card" [class.selected]="mode === 'online'" [attr.aria-pressed]="mode === 'online'" [disabled]="busy" (click)="setMode('online')"><span class="mode-icon" aria-hidden="true">↗</span><span><strong>{{ t('Online mit Freunden', 'Online with friends') }}</strong><small>{{ t('Zwei Geräte. Ein Duell.', 'Two devices. One duel.') }}</small></span><span class="mode-check" aria-hidden="true">{{ mode === 'online' ? '✓' : '→' }}</span></button>
       </div>
+      @if (mode === 'online') {
+        @if (onlineApi) {
+          <online-game [language]="language" [api]="onlineApi" />
+        } @else {
+          <p class="mode-note" role="status">{{ t('Online-Verbindung wird geladen. Falls diese Meldung bleibt, bitte die Seite neu laden.', 'Loading online connection. If this message remains, please reload the page.') }}</p>
+        }
+      } @else {
       <p class="mode-note">{{ t('Modus wechseln startet ein neues Match mit 0 Punkten.', 'Switching modes starts a new match with 0 points.') }}</p>
       <div class="match-settings">
         @if (mode === 'local') {
@@ -81,6 +89,7 @@
           </div>
         </aside>
       </div>
+      }
     </section>
 
     <section class="how-to" aria-labelledby="rules-title"><div class="rules-heading"><span class="eyebrow">{{ t('SCHNELL ERKLÄRT', 'THE QUICK GUIDE') }}</span><h2 id="rules-title">{{ t('Einfach spielen.', 'Just play.') }}</h2></div><div class="rule"><span class="rule-number">01</span><p><strong>{{ t('Abwechselnd setzen.', 'Take turns.') }}</strong><br>{{ t('X beginnt die erste Runde, danach wechselt ihr euch ab.', 'X starts the first round, then you take turns.') }}</p></div><div class="rule"><span class="rule-number">02</span><p><strong>{{ t('Drei machen den Unterschied.', 'Three make the difference.') }}</strong><br>{{ t('Waagerecht, senkrecht oder diagonal: Eine Reihe gewinnt.', 'Horizontal, vertical or diagonal: a line wins.') }}</p></div><div class="rule"><span class="rule-number">03</span><p><strong>{{ t('Neue Runde, neue Chance.', 'New round, new chance.') }}</strong><br>{{ t('Wer die nächste Runde beginnt, wechselt automatisch.', 'The starting player changes automatically each round.') }}</p></div></section>

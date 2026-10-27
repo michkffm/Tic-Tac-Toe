@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: spielzeit-michkffm-online
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r backend/render-requirements.txt
+    startCommand: gunicorn --workers 1 --threads 8 --bind 0.0.0.0:$PORT 'backend.app:create_app()'
+    healthCheckPath: /health
+    envVars:
+      - key: GAME_DISABLE_SAVES
+        value: '1'
+      - key: GAME_ALLOWED_ORIGIN
+        value: https://michkffm.github.io

@@ -11,6 +11,10 @@ import time
 
 from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException
+try:
+    from .online import register_online
+except ImportError:
+    from online import register_online
 
 LINES = ((0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6))
 
@@ -72,12 +76,20 @@ def create_app(database=None, frontend=None):
     Path(app.config["DATABASE"]).parent.mkdir(parents=True, exist_ok=True)
     with closing(sqlite3.connect(app.config["DATABASE"])) as db, db:
         db.execute("CREATE TABLE IF NOT EXISTS saves (owner TEXT PRIMARY KEY, state TEXT NOT NULL, revision INTEGER NOT NULL, updated INTEGER NOT NULL)")
+    register_online(app)
+    allowed_origin = os.environ.get("GAME_ALLOWED_ORIGIN", "https://michkffm.github.io")
     rates, lock = {}, Lock()
 
     @app.before_request
     def protect_api():
         if not request.path.startswith("/api/"):
             return None
+        if request.path.startswith('/api/rooms'):
+            origin = request.headers.get('Origin')
+            if origin and origin != allowed_origin:
+                return jsonify(error='origin_not_allowed'), 403
+            if request.method == 'OPTIONS':
+                return '', 204
         # No forwarded IP headers are trusted. Configure a reverse proxy explicitly before deployment.
         address = request.remote_addr or "unknown"
         now = time.monotonic()
@@ -87,7 +99,7 @@ def create_app(database=None, frontend=None):
                 if len(rates) >= 1024:
                     rates.pop(next(iter(rates)))
                 rates[address] = [now, 1]
-            elif bucket[1] >= 60:
+            elif bucket[1] >= (240 if request.path.startswith('/api/rooms') else 60):
                 return jsonify(error="rate_limit"), 429
             else:
                 bucket[1] += 1
@@ -97,6 +109,11 @@ def create_app(database=None, frontend=None):
 
     @app.after_request
     def headers(response):
+        if request.path.startswith('/api/rooms') and request.headers.get('Origin') == allowed_origin:
+            response.headers['Access-Control-Allow-Origin'] = allowed_origin
+            response.headers['Vary'] = 'Origin'
+            response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
@@ -115,10 +132,12 @@ def create_app(database=None, frontend=None):
 
     @app.get("/config.json")
     def config():
-        return jsonify(serverStorage=True)
+        return jsonify(serverStorage=os.environ.get("GAME_DISABLE_SAVES") != "1")
 
     @app.route("/api/state", methods=["GET", "PUT"])
     def state():
+        if os.environ.get('GAME_DISABLE_SAVES') == '1':
+            return jsonify(error='not_available'), 404
         owner = hashlib.sha256(request.headers["Authorization"].encode()).hexdigest()
         with closing(sqlite3.connect(app.config["DATABASE"], timeout=5)) as db, db:
             if request.method == "GET":

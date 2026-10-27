@@ -1,7 +1,8 @@
+import { OnlineGame } from './online-game';
 import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, QueryList, ViewChild, ViewChildren, OnInit, inject } from '@angular/core';
 
-type GameMode = 'single' | 'local';
+type GameMode = 'single' | 'local' | 'online';
 type Difficulty = 'easy' | 'medium' | 'hard';
 type Player = 'X' | 'O';
 type Result = Player | 'draw' | null;
@@ -14,6 +15,7 @@ const WINNING_LINES: readonly (readonly number[])[] = [
 
 @Component({
   selector: 'app-root',
+  imports: [OnlineGame],
   templateUrl: './app.html',
   styleUrls: ['./app.css', './settings.css'],
 })
@@ -26,6 +28,7 @@ export class App implements OnInit {
   lastMove: number | null = null;
   language: 'de' | 'en' = 'de';
   darkMode = false;
+  onlineApi = '';
   serverStorage = false;
   busy = false;
   revision = 0;
@@ -44,6 +47,11 @@ export class App implements OnInit {
     try {
       const response = await fetch('config.json', { signal: AbortSignal.timeout(10000) });
       const config: unknown = response.ok ? await response.json() : null;
+      if (isRecord(config) && typeof config['onlineApi'] === 'string') {
+        const url = new URL(config['onlineApi']);
+        if (url.protocol === 'https:' || (url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) this.onlineApi = url.origin;
+      }
+      if (/^room=[a-f0-9]{32}$/.test(location.hash.slice(1))) this.mode = 'online';
       this.serverStorage = typeof config === 'object' && config !== null && 'serverStorage' in config && config.serverStorage === true;
     } catch { this.serverStorage = false; }
   }
@@ -82,7 +90,7 @@ export class App implements OnInit {
   }
 
   async transferState(action: 'save' | 'load'): Promise<void> {
-    if (!this.serverStorage || this.busy) return;
+    if (!this.serverStorage || this.busy || this.mode === 'online') return;
     this.busy = true;
     this.storageMessage = null;
     try {

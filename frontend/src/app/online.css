@@ -1,0 +1,16 @@
+.online-intro { color: var(--accent); font-size: 14px; font-weight: 650; margin: 22px 0 0; }
+.online-create { margin-top: 16px; }
+.online-join, .online-invite { align-items: end; }
+.online-room-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; font-size: 13px; }
+.online-room-header .reset-button { width: auto; }
+.online-presence, .online-message { font-size: 12px; line-height: 1.7; color: var(--text-muted); margin: 16px 0; }
+.online-score-title { font-size: 14px; }
+.online-section .player-card { justify-content: space-between; gap: 14px; }
+.online-section .player-name { overflow-wrap: anywhere; min-width: 0; }
+.online-section .primary-button { gap: 8px; }
+.online-section .round-label { margin: 0 0 12px; }
+.online-section .match-panel .primary-button { margin-top: 18px; }
+.online-section .turn-status { margin-top: 20px; }
+.online-section button:disabled { opacity: .6; cursor: default; }
+.online-section .cell:disabled { opacity: 1; }
+@media (max-width: 580px) { .online-section .match-panel .primary-button { grid-column: 1 / -1; margin: 0; } .online-score-title { grid-column: 1 / -1; } }
