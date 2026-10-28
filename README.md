@@ -4,7 +4,7 @@ Drei in einer Reihe – alleine, zu zweit an einem Gerät oder online auf zwei v
 
 [**Jetzt im Browser spielen ↗**](https://michkffm.github.io/Tic-Tac-Toe/)
 
-![Online-Spiel mit zwei unabhängigen Sitzungen](docs/online-multiplayer.jpg)
+![Online-Spiel auf GitHub Pages mit Render-Backend](docs/online-multiplayer.jpg)
 
 ## Spielmodi
 
@@ -107,6 +107,8 @@ Bei manueller Einrichtung auf Render: öffentliches Repository `michkffm/Tic-Tac
 Bei Anbindung über „Public Git Repository“ wird nicht automatisch jeder Push deployed; nach Backend-Änderungen auf Render **Manual Deploy → Deploy latest commit** verwenden. Alternativ kann die Blueprint-Konfiguration angebunden werden. Redeploys beenden bestehende Online-Räume.
 
 ## Tests und Sicherheit
+
+Am 28.10.2026 veröffentlicht und live mit zwei unabhängigen Browsersitzungen geprüft: Einladen, Beitreten, wechselseitige Züge, Gewinnerkennung, Punkte, Neuladen mit gleichem Spielerplatz und gemeinsamer Rundenwechsel. 40 Frontend-Tests, 16 Backend-Tests sowie der Produktionsbuild waren erfolgreich; der npm-Produktionsaudit meldete keine bekannten Schwachstellen. Der Screenshot oben stammt von der veröffentlichten Spielseite.
 
 ```sh
 .venv/bin/python -m unittest discover -s backend -v
