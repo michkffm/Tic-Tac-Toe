@@ -1,6 +1,6 @@
 # Spielzeit · Frontend
 
-Die vollständige Anleitung steht im [Projekt-README](../README.md).
+Die vollständige Anleitung steht im Projekt-README: [Deutsch](../README.md) | [English](../README.en.md).
 
 ```bash
 npm ci --ignore-scripts

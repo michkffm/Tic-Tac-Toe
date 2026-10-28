@@ -1,5 +1,7 @@
 # Spielzeit · Tic-Tac-Toe
 
+**Deutsch** | [English](README.en.md)
+
 Ein Fullstack-Browserspiel mit Angular, TypeScript und Flask. Spiele gegen den Computer, gemeinsam an einem Gerät oder online mit einem Freund auf einem anderen Gerät.
 
 **[Live-Demo öffnen](https://michkffm.github.io/Tic-Tac-Toe/)**
@@ -69,7 +71,7 @@ npm --prefix frontend run build
 .venv/bin/python -m flask --app backend.app:create_app run --host 127.0.0.1 --port 8772
 ```
 
-Anschließend die Anwendung unter **http://127.0.0.1:8772/** öffnen. In dieser lokalen Variante stehen auch die Schaltflächen zum Speichern und Laden lokaler Partien zur Verfügung. Die Online-API ist auf derselben Adresse erreichbar.
+Anschließend die Anwendung unter **http://127.0.0.1:8772/** öffnen. In dieser lokalen Variante stehen auch die Schaltflächen zum Speichern und Laden lokaler Partien zur Verfügung. Die Online-API-Endpunkte sind unter derselben Adresse erreichbar; zur Nutzung über die Oberfläche ist ein `onlineApi`-Eintrag in der Frontend-Konfiguration erforderlich.
 
 Für Änderungen am Frontend kann zusätzlich der Angular-Entwicklungsserver gestartet werden:
 
