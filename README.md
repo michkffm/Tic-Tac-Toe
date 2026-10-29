@@ -1,5 +1,7 @@
 # Spielzeit · Tic-Tac-Toe
 
+Projekt von Michael Koch
+
 **Deutsch** | [English](README.en.md)
 
 Ein Fullstack-Browserspiel mit Angular, TypeScript und Flask. Spiele gegen den Computer, gemeinsam an einem Gerät oder online mit einem Freund auf einem anderen Gerät.
