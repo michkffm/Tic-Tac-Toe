@@ -1,4 +1,3 @@
-"""Same-origin API and frontend for anonymous, browser-owned game saves."""
 from contextlib import closing
 import hashlib
 import json
@@ -57,7 +56,6 @@ def validate_state(data):
         winner = next(iter(winners))
         if board.count(starter) - board.count(other) != (1 if winner == starter else 0):
             return False
-        # There must be a possible final winning move; play stops at the first win.
         if not any(not any(all((None if j == i else board[j]) == winner for j in line) for line in LINES)
                    for i, cell in enumerate(board) if cell == winner):
             return False
@@ -90,7 +88,6 @@ def create_app(database=None, frontend=None):
                 return jsonify(error='origin_not_allowed'), 403
             if request.method == 'OPTIONS':
                 return '', 204
-        # No forwarded IP headers are trusted. Configure a reverse proxy explicitly before deployment.
         address = request.remote_addr or "unknown"
         now = time.monotonic()
         with lock:
@@ -103,7 +100,6 @@ def create_app(database=None, frontend=None):
                 return jsonify(error="rate_limit"), 429
             else:
                 bucket[1] += 1
-        # Browser-generated bearer capability: never sent in URLs or stored in the database.
         if not re.fullmatch(r"Bearer [0-9a-f]{64}", request.headers.get("Authorization", "")):
             return jsonify(error="unauthorized"), 401
 
