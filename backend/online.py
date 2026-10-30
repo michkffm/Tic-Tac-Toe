@@ -1,4 +1,3 @@
-"""Temporary, server-authoritative two-player rooms. One process, multiple threads."""
 import hashlib
 import re
 import secrets
